@@ -29,6 +29,7 @@ var gl = GL.create({
   // avoided by using centroid sampling except it isn't supported by WebGL.
   antialias: false
 });
+extend(gl);
 if (!gl.getExtension('OES_texture_float')) {
   document.write('This demo requires the OES_texture_float extension to run');
   throw 'not supported';
@@ -113,6 +114,8 @@ texMech.triangles.push([0, 2, 1]);
 texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
+
+var cube = new GL.Mesh.cube({coords : true});
 
 function QuadMesh(numQuads, texelsPerSide) {
   this.size = Math.ceil(Math.sqrt(numQuads));
@@ -253,7 +256,7 @@ var numArcQuads = 20;
 var groundTilesPerSide = 5;
 var quadMesh = new QuadMesh(numArcQuads * 2 + groundTilesPerSide * groundTilesPerSide, 64);
 // Arc of randomly oriented quads
-for (var i = 0; i < numArcQuads; i++) {
+for (var i = 0; i < numArcQuads-6; i++) {
   var r = 0.3;
   var center = GL.Vector.fromAngles(0, ((i + Math.random()) / numArcQuads) * Math.PI);
   var a = GL.Vector.randomDirection().multiply(r);
@@ -265,6 +268,22 @@ for (var i = 0; i < numArcQuads; i++) {
     center.add(a).add(b)
   );
 }
+
+var c1 = new GL.Vector(-0.3, -0.3, -0.3);
+var c2 = new GL.Vector(-0.3, 0.3, -0.3);
+var c3 = new GL.Vector(0.3, 0.3, -0.3);
+var c4 = new GL.Vector(0.3, -0.3, -0.3);
+var c5 = new GL.Vector(-0.3, -0.3, 0.3);
+var c6 = new GL.Vector(-0.3, 0.3, 0.3);
+var c7 = new GL.Vector(0.3, 0.3, 0.3);
+var c8 = new GL.Vector(0.3, -0.3, 0.3);
+
+quadMesh.addQuad(c1, c2, c4, c3);
+quadMesh.addQuad(c8, c7, c5, c6);
+quadMesh.addQuad(c3, c7, c4, c8);
+quadMesh.addQuad(c2, c6, c3, c7);
+quadMesh.addQuad(c6, c2, c5, c1);
+quadMesh.addQuad(c1, c4, c5, c8);
 // Plane of quads
 for (var x = 0; x < groundTilesPerSide; x++) {
   for (var z = 0; z < groundTilesPerSide; z++) {
@@ -305,7 +324,7 @@ gl.onmousemove = function(e) {
 };
 
 var flip = false;
-var r = 0.03;
+var r = 0.3;
 
 gl.ondraw = function() {
   gl.clearColor(0.9, 0.9, 0.9, 1);
@@ -319,7 +338,7 @@ gl.ondraw = function() {
   // Alternate between a shadow from a random point on the sky hemisphere
   // and a random point near the light (creates a soft shadow)
   var dir = GL.Vector.randomDirection();
-  //flip = !flip;
+  flip = !flip;
   if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
   quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
 
@@ -327,22 +346,12 @@ gl.ondraw = function() {
   quadMesh.lightmapTexture.bind();
   textureMapShader.draw(mesh);
 
-  var screnSize = getSize();
-  
-  gl.matrixMode(gl.PROJECTION);
-  gl.pushMatrix();
-  gl.loadIdentity();
-  gl.ortho(0, screnSize.width, screnSize.height, 0, -1.0, 1.0);
-  gl.matrixMode(gl.MODELVIEW);
-  gl.pushMatrix();
-  gl.loadIdentity();
 
+  gl.begin2D();
+  gl.translate(200, 200, 0);
   textureMapShader.draw(texMech);
-
-  gl.matrixMode(gl.PROJECTION);
-  gl.popMatrix();
-  gl.matrixMode(gl.MODELVIEW);
-  gl.popMatrix();
+  gl.end2D();
+  
 
 };
 
