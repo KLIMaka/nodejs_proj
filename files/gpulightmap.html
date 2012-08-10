@@ -68,7 +68,7 @@ var shadowTestShader = new GL.Shader('\
      * infinitely thin geometry and is not needed with the solid geometry\
      * present in most scenes. I made this hack up and have not seen it before.\
      */\
-    pos.xyz += normalize(cross(normal, cross(normal, light))) * 0.02;\
+    pos.xyz += normalize(cross(normal, cross(normal, light))) * 0.015;\
     \
     coord = shadowMapMatrix * pos;\
     gl_Position = vec4(offsetCoord * 2.0 - 1.0, 0.0, 1.0);\
@@ -95,22 +95,22 @@ var shadowTestShader = new GL.Shader('\
 var texMech = new GL.Mesh({coords: true });
 
 // texMech.vertices.push([0.0, 0.0, 0.0]);
-// texMech.vertices.push([100.0, 0.0, 0.0]);
-// texMech.vertices.push([100.0, 100.0, 0.0]);
-// texMech.vertices.push([0.0, 100.0, 0.0]);
+// texMech.vertices.push([0.5, 0.0, 0.0]);
+// texMech.vertices.push([0.5, 0.5, 0.0]);
+// texMech.vertices.push([0.0, 0.5, 0.0]);
 
-texMech.vertices.push([-100.0, -100.0, 0.0]);
-texMech.vertices.push([100.0, -100.0, 0.0]);
-texMech.vertices.push([100.0, 100.0, 0.0]);
-texMech.vertices.push([-100.0, 100.0, 0.0]);
+texMech.vertices.push([0.0, 0.0, 0.0]);
+texMech.vertices.push([300.0, 0.0, 0.0]);
+texMech.vertices.push([300.0, 300.0, 0.0]);
+texMech.vertices.push([0.0, 300.0, 0.0]);
 
 texMech.coords.push([0.0, 0.0]);
 texMech.coords.push([0.0, 1.0]);
 texMech.coords.push([1.0, 1.0]);
-texMech.coords.push([0.0, 1.0]);
+texMech.coords.push([1.0, 0.0]);
 
-texMech.triangles.push([0, 1, 2]);
-texMech.triangles.push([0, 2, 3]);
+texMech.triangles.push([0, 2, 1]);
+texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
 
@@ -249,9 +249,9 @@ QuadMesh.prototype.drawShadow = function(dir) {
 };
 
 // Make a mesh of quads
-var numArcQuads = 5;
+var numArcQuads = 20;
 var groundTilesPerSide = 5;
-var quadMesh = new QuadMesh((numArcQuads + groundTilesPerSide * groundTilesPerSide) * 2, 64);
+var quadMesh = new QuadMesh(numArcQuads * 2 + groundTilesPerSide * groundTilesPerSide, 64);
 // Arc of randomly oriented quads
 for (var i = 0; i < numArcQuads; i++) {
   var r = 0.3;
@@ -270,7 +270,7 @@ for (var x = 0; x < groundTilesPerSide; x++) {
   for (var z = 0; z < groundTilesPerSide; z++) {
     var dx = x - groundTilesPerSide / 2;
     var dz = z - groundTilesPerSide / 2;
-    quadMesh.addDoubleQuad(
+    quadMesh.addQuad(
       new GL.Vector(dx, 0, dz),
       new GL.Vector(dx, 0, dz + 1),
       new GL.Vector(dx + 1, 0, dz),
@@ -305,7 +305,7 @@ gl.onmousemove = function(e) {
 };
 
 var flip = false;
-var r = 0.0;
+var r = 0.03;
 
 gl.ondraw = function() {
   gl.clearColor(0.9, 0.9, 0.9, 1);
@@ -319,8 +319,8 @@ gl.ondraw = function() {
   // Alternate between a shadow from a random point on the sky hemisphere
   // and a random point near the light (creates a soft shadow)
   var dir = GL.Vector.randomDirection();
-  flip = !flip;
-  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(0.3 * Math.sqrt(Math.random()))).unit();
+  //flip = !flip;
+  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
   quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
 
   // Draw the mesh with the ambient occlusion so far
@@ -332,8 +332,7 @@ gl.ondraw = function() {
   gl.matrixMode(gl.PROJECTION);
   gl.pushMatrix();
   gl.loadIdentity();
-  gl.ortho(0, screnSize.width, -screnSize.height, 0, 0, 1.0);
-  gl.projectionMatrix.m[7] = 1.0;
+  gl.ortho(0, screnSize.width, screnSize.height, 0, -1.0, 1.0);
   gl.matrixMode(gl.MODELVIEW);
   gl.pushMatrix();
   gl.loadIdentity();
