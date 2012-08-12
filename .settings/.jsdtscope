@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="node_modules/stylus/node_modules/cssom/lib/|node_modules/express/node_modules/mime/|node_modules/express/node_modules/qs/|node_modules/express/node_modules/connect/lib/middleware/session/|node_modules/stylus/lib/visitor/|node_modules/express/|node_modules/jade/|node_modules/stylus/lib/stack/|node_modules/stylus/node_modules/growl/|node_modules/express/lib/|node_modules/stylus/node_modules/cssom/test/vendor/|node_modules/stylus/lib/convert/|node_modules/express/node_modules/qs/support/should/lib/|node_modules/express/node_modules/connect/lib/middleware/|node_modules/express/node_modules/connect/|node_modules/express/node_modules/qs/support/expresso/test/serial/|node_modules/stylus/lib/functions/|node_modules/jade/lib/|node_modules/stylus/node_modules/cssom/plugins/|node_modules/express/node_modules/qs/test/|node_modules/stylus/|node_modules/jade/lib/nodes/|node_modules/stylus/node_modules/cssom/server/|node_modules/express/node_modules/qs/support/should/|node_modules/stylus/lib/nodes/|node_modules/express/node_modules/qs/support/expresso/lib/|node_modules/express/node_modules/qs/lib/|test/|node_modules/stylus/node_modules/cssom/test/|node_modules/express/node_modules/connect/lib/|node_modules/stylus/lib/|node_modules/express/node_modules/qs/support/should/test/|node_modules/express/node_modules/qs/support/expresso/test/|node_modules/express/node_modules/qs/support/should/examples/|node_modules/express/lib/view/|node_modules/stylus/node_modules/growl/lib/|files/" kind="src" path=""/>
+	<classpathentry kind="src" path="files"/>
+	<classpathentry excluding="node_modules/mime/|node_modules/qs/|node_modules/connect/lib/middleware/session/|lib/|node_modules/qs/support/should/lib/|node_modules/connect/lib/middleware/|node_modules/connect/|node_modules/qs/support/expresso/test/serial/|node_modules/qs/test/|node_modules/qs/support/should/|node_modules/qs/support/expresso/lib/|node_modules/qs/lib/|node_modules/connect/lib/|node_modules/qs/support/should/test/|node_modules/qs/support/expresso/test/|node_modules/qs/support/should/examples/|lib/view/" kind="src" path="node_modules/express"/>
+	<classpathentry excluding="view/" kind="src" path="node_modules/express/lib"/>
+	<classpathentry kind="src" path="node_modules/express/lib/view"/>
+	<classpathentry excluding="lib/middleware/session/|lib/middleware/|lib/" kind="src" path="node_modules/express/node_modules/connect"/>
+	<classpathentry excluding="middleware/session/|middleware/" kind="src" path="node_modules/express/node_modules/connect/lib"/>
+	<classpathentry excluding="session/" kind="src" path="node_modules/express/node_modules/connect/lib/middleware"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/connect/lib/middleware/session"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/mime"/>
+	<classpathentry excluding="support/should/lib/|support/expresso/test/serial/|test/|support/should/|support/expresso/lib/|lib/|support/should/test/|support/expresso/test/|support/should/examples/" kind="src" path="node_modules/express/node_modules/qs"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/lib"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/support/expresso/lib"/>
+	<classpathentry excluding="serial/" kind="src" path="node_modules/express/node_modules/qs/support/expresso/test"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/support/expresso/test/serial"/>
+	<classpathentry excluding="lib/|test/|examples/" kind="src" path="node_modules/express/node_modules/qs/support/should"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/support/should/examples"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/support/should/lib"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/support/should/test"/>
+	<classpathentry kind="src" path="node_modules/express/node_modules/qs/test"/>
+	<classpathentry excluding="lib/|lib/nodes/" kind="src" path="node_modules/jade"/>
+	<classpathentry excluding="nodes/" kind="src" path="node_modules/jade/lib"/>
+	<classpathentry kind="src" path="node_modules/jade/lib/nodes"/>
+	<classpathentry excluding="node_modules/cssom/lib/|lib/visitor/|lib/stack/|node_modules/growl/|node_modules/cssom/test/vendor/|lib/convert/|lib/functions/|node_modules/cssom/plugins/|node_modules/cssom/server/|lib/nodes/|node_modules/cssom/test/|lib/|node_modules/growl/lib/" kind="src" path="node_modules/stylus"/>
+	<classpathentry excluding="visitor/|stack/|convert/|functions/|nodes/" kind="src" path="node_modules/stylus/lib"/>
+	<classpathentry kind="src" path="node_modules/stylus/lib/convert"/>
+	<classpathentry kind="src" path="node_modules/stylus/lib/functions"/>
+	<classpathentry kind="src" path="node_modules/stylus/lib/nodes"/>
+	<classpathentry kind="src" path="node_modules/stylus/lib/stack"/>
+	<classpathentry kind="src" path="node_modules/stylus/lib/visitor"/>
+	<classpathentry kind="src" path="node_modules/stylus/node_modules/cssom/lib"/>
+	<classpathentry kind="src" path="node_modules/stylus/node_modules/cssom/plugins"/>
+	<classpathentry kind="src" path="node_modules/stylus/node_modules/cssom/server"/>
+	<classpathentry excluding="vendor/" kind="src" path="node_modules/stylus/node_modules/cssom/test"/>
+	<classpathentry kind="src" path="node_modules/stylus/node_modules/cssom/test/vendor"/>
+	<classpathentry excluding="lib/" kind="src" path="node_modules/stylus/node_modules/growl"/>
+	<classpathentry kind="src" path="node_modules/stylus/node_modules/growl/lib"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

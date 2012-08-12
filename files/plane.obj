@@ -1,0 +1,17 @@
+# OBJ written from C:\Users\KLIMaka\Desktop\plane.obj
+
+o Mesh
+v -0.5 0 -0.5
+v 0.5 0 -0.5
+v 0.5 0 0.5
+v -0.5 0 0.5
+vn 0 1 0
+vt 0.0121951 0.0121951
+vt 0.987805 0.0121951
+vt 0.0121951 0.987805
+vt 0.987805 0.987805
+mtllib plane.mtl
+usemtl Default
+g Default
+f 1/1/1 4/2/1 2/3/1
+f 3/4/1 2/3/1 4/2/1

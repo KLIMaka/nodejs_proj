@@ -15,7 +15,7 @@ computed using rasterization. That is what this example does.
 -->
 <!DOCTYPE html>
 <html><body>
-  <script src="http://evanw.github.com/lightgl.js/lightgl.js"></script>
+  <script src="lightgl.js"></script>
   <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
   <script src="utils.js"></script>
   <script>
@@ -27,7 +27,8 @@ var gl = GL.create({
   // edges of quads due to extrapolation. For more details see the article at
   // http://www.opengl.org/pipeline/article/vol003_6/. These artifacts can be
   // avoided by using centroid sampling except it isn't supported by WebGL.
-  antialias: false
+  antialias: true,
+  alpha : false,
 });
 extend(gl);
 if (!gl.getExtension('OES_texture_float')) {
@@ -36,69 +37,10 @@ if (!gl.getExtension('OES_texture_float')) {
 }
 
 var depthMap = new GL.Texture(1024, 1024, { format: gl.RED });
-var depthShader = new GL.Shader('\
-  varying vec4 pos;\
-  void main() {\
-    gl_Position = pos = gl_ModelViewProjectionMatrix * gl_Vertex;\
-  }\
-', '\
-  varying vec4 pos;\
-  void main() {\
-    float depth = pos.z / pos.w;\
-    gl_FragColor = vec4(depth * 0.5 + 0.5);\
-  }\
-');
-
-var shadowTestShader = new GL.Shader('\
-  uniform mat4 shadowMapMatrix;\
-  uniform vec3 light;\
-  attribute vec2 offsetCoord;\
-  attribute vec4 offsetPosition;\
-  varying vec4 coord;\
-  varying vec3 normal;\
-  \
-  void main() {\
-    normal = gl_Normal;\
-    vec4 pos = offsetPosition;\
-    \
-    /*\
-     * This is a hack that avoids leaking light immediately behind polygons by\
-     * darkening creases in front of polygons instead. It biases the position\
-     * forward toward the light to compensate for the bias away from the light\
-     * applied by the fragment shader. This is only necessary because we have\
-     * infinitely thin geometry and is not needed with the solid geometry\
-     * present in most scenes. I made this hack up and have not seen it before.\
-     */\
-    pos.xyz += normalize(cross(normal, cross(normal, light))) * 0.015;\
-    \
-    coord = shadowMapMatrix * pos;\
-    gl_Position = vec4(offsetCoord * 2.0 - 1.0, 0.0, 1.0);\
-  }\
-', '\
-  uniform float sampleCount;\
-  uniform sampler2D depthMap;\
-  uniform vec3 light;\
-  varying vec4 coord;\
-  varying vec3 normal;\
-  \
-  void main() {\
-    /* Run shadow test */\
-    const float bias = -0.003;\
-    float depth = texture2D(depthMap, coord.xy / coord.w * 0.5 + 0.5).r;\
-    float shadow = (bias + coord.z / coord.w * 0.5 + 0.5 - depth > 0.0) ? 1.0 : 0.0;\
-    \
-    /* Points on polygons facing away from the light are always in shadow */\
-    float color = dot(normal, light) > 0.0 ? 1.0 - shadow : 0.0;\
-    gl_FragColor = vec4(vec3(color), 1.0 / (1.0 + sampleCount));\
-  }\
-');
+var depthShader = new asyncShader('depth');
+var shadowTestShader = new asyncShader('shadow_test');
 
 var texMech = new GL.Mesh({coords: true });
-
-// texMech.vertices.push([0.0, 0.0, 0.0]);
-// texMech.vertices.push([0.5, 0.0, 0.0]);
-// texMech.vertices.push([0.5, 0.5, 0.0]);
-// texMech.vertices.push([0.0, 0.5, 0.0]);
 
 texMech.vertices.push([0.0, 0.0, 0.0]);
 texMech.vertices.push([300.0, 0.0, 0.0]);
@@ -115,7 +57,74 @@ texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
 
-var cube = new GL.Mesh.cube({coords : true});
+var scene = new drawer();
+var cube = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
+var cube1 = new asyncMesh('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
+var cube2 = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
+var plane = new asyncMesh('plane.obj').setScale(10);
+
+scene.add(plane);
+scene.add(cube);
+scene.add(cube1);
+scene.add(cube2);
+
+var lightmapper = new lightAtlas(512, 2);
+lightmapper.allocate(plane);
+lightmapper.allocate(cube);
+lightmapper.allocate(cube1);
+lightmapper.allocate(cube2);
+
+
+var exp_size = 4;
+function renderLightmap(dir) {
+
+  // Construct a camera looking from the light toward the object
+  var r = scene.bounds.radius*exp_size, c = scene.bounds.center;
+  gl.matrixMode(gl.PROJECTION);
+  gl.pushMatrix();
+  gl.loadIdentity();
+  gl.ortho(-r, r, -r, r, -r, r);
+  gl.matrixMode(gl.MODELVIEW);
+  gl.pushMatrix();
+  gl.loadIdentity();
+
+  var at = c.subtract(dir);
+  var useY = true;//(dir.max() != dir.y);
+  var up = new GL.Vector(!useY, useY, 0).cross(dir);
+  gl.lookAt(c.x, c.y, c.z, at.x, at.y, at.z, up.x, up.y, up.z);
+
+  // Render the object viewed from the light using a shader that returns the fragment depth
+  var mesh = this.mesh;
+  var shadowMapMatrix = gl.projectionMatrix.multiply(gl.modelviewMatrix);
+  depthMap.drawTo(function() {
+    gl.clearColor(1, 1, 1, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    scene.draw(depthShader, ['transform']);
+  });
+
+  // Reset the transform
+  gl.matrixMode(gl.PROJECTION);
+  gl.popMatrix();
+  gl.matrixMode(gl.MODELVIEW);
+  gl.popMatrix();
+
+  // Run the shadow test for each texel in the lightmap and
+  // accumulate that onto the existing lightmap contents
+  depthMap.bind();
+  lightmapper.texture.drawTo(function() {
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    shadowTestShader.uniforms({
+      shadowMapMatrix: shadowMapMatrix,
+      sampleCount: 1000,
+      light: dir,
+      lightmapMult: lightmapper.delta,
+    });
+    scene.draw(shadowTestShader,['lightmapOff', 'transform']);
+    gl.disable(gl.BLEND);
+  });
+  depthMap.unbind();
+}
 
 function QuadMesh(numQuads, texelsPerSide) {
   this.size = Math.ceil(Math.sqrt(numQuads));
@@ -164,10 +173,15 @@ QuadMesh.prototype.addQuad = function(a, b, c, d) {
   var t = (i - s) / this.size;
 
   // Coordinates that are in the center of border texels (to avoid leaking)
-  var s0 = (s + half) / this.size;
-  var t0 = (t + half) / this.size;
-  var s1 = (s + 1 - half) / this.size;
-  var t1 = (t + 1 - half) / this.size;
+  // var s0 = (s + half) / this.size;
+  // var t0 = (t + half) / this.size;
+  // var s1 = (s + 1 - half) / this.size;
+  // var t1 = (t + 1 - half) / this.size;
+
+  var s0 = (s + half*2.9) / this.size;
+  var t0 = (t + half*2.9) / this.size;
+  var s1 = (s + 1 - half*2.9) / this.size;
+  var t1 = (t + 1 - half*2.9) / this.size;
   this.mesh.coords.push([s0, t0]);
   this.mesh.coords.push([s1, t0]);
   this.mesh.coords.push([s0, t1]);
@@ -195,13 +209,13 @@ QuadMesh.prototype.addDoubleQuad = function(a, b, c, d) {
 };
 
 var c1 = new GL.Vector(-1, -1, -1);
-var c2 = new GL.Vector(-1, 1, -1);
-var c3 = new GL.Vector(1, 1, -1);
-var c4 = new GL.Vector(1, -1, -1);
-var c5 = new GL.Vector(-1, -1, 1);
-var c6 = new GL.Vector(-1, 1, 1);
-var c7 = new GL.Vector(1, 1, 1);
-var c8 = new GL.Vector(1, -1, 1);
+var c2 = new GL.Vector(-1,  1, -1);
+var c3 = new GL.Vector( 1,  1, -1);
+var c4 = new GL.Vector( 1, -1, -1);
+var c5 = new GL.Vector(-1, -1,  1);
+var c6 = new GL.Vector(-1,  1,  1);
+var c7 = new GL.Vector( 1,  1,  1);
+var c8 = new GL.Vector( 1, -1,  1);
 
 QuadMesh.prototype.addCube = function(off, size) {
   this.addQuad(c1.multiply(size).add(off), c2.multiply(size).add(off), c4.multiply(size).add(off), c3.multiply(size).add(off));
@@ -272,21 +286,8 @@ QuadMesh.prototype.drawShadow = function(dir) {
 // Make a mesh of quads
 var numArcQuads = 500;
 var groundTilesPerSide = 5;
-var quadMesh = new QuadMesh(numArcQuads * 6 + groundTilesPerSide * groundTilesPerSide, 8);
-// Arc of randomly oriented quads
-/*for (var i = 0; i < numArcQuads-6; i++) {
-  var r = 0.3;
-  var center = GL.Vector.fromAngles(0, ((i + Math.random()) / numArcQuads) * Math.PI);
-  var a = GL.Vector.randomDirection().multiply(r);
-  var b = GL.Vector.randomDirection().cross(a).unit().multiply(r);
-  quadMesh.addDoubleQuad(
-    center.subtract(a).subtract(b),
-    center.subtract(a).add(b),
-    center.add(a).subtract(b),
-    center.add(a).add(b)
-  );
-}*/
-
+var texePerSide = 16;
+var quadMesh = new QuadMesh(numArcQuads * 6 + groundTilesPerSide * groundTilesPerSide, texePerSide);
 for (var i = 0; i < numArcQuads-6; i++) {
   var off = GL.Vector.randomDirection();
   if (off.y < 0) off.y *= -1;
@@ -311,58 +312,72 @@ quadMesh.compile();
 
 // The mesh will be drawn with texture mapping
 var mesh = quadMesh.mesh;
-var textureMapShader = new GL.Shader('\
-  varying vec2 coord;\
-  void main() {\
-    coord = gl_TexCoord.st;\
-    gl_Position = ftransform();\
-  }\
-', '\
-  uniform sampler2D texture;\
-  varying vec2 coord;\
-  void main() {\
-    gl_FragColor = texture2D(texture, coord);\
-  }\
-');
+var textureMapShader = new asyncShader('tex_map');
 
+var mouse = {
+  x : 0,
+  y : 0,
+  object : null,
+}
+var cam = new camera();
+cam.setZoom(4);
 gl.onmousemove = function(e) {
   if (e.dragging) {
-    angleY += e.deltaX;
-    angleX += e.deltaY;
-    angleX = Math.max(-90, Math.min(90, angleX));
+    cam.updateAngles(e.deltaX, e.deltaY);
   }
+  mouse.x = e.x;
+  mouse.y = e.y;
 };
+
+gl.canvas.onmousewheel = function(e) {
+  cam.updateZoom(e.wheelDelta / -240);
+}
+
+gl.canvas.onclick = function(e) {
+
+}
 
 var flip = false;
 var r = 0.1;
+var selectShader = asyncShader('select');
 
 gl.ondraw = function() {
+  
+  gl.loadIdentity();
+  cam.applyTransform();
+
+  gl.clearColor(0, 0, 0, 0),
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  scene.draw(selectShader, ['id', 'transform']);
+
+
   gl.clearColor(0.9, 0.9, 0.9, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.loadIdentity();
-  gl.translate(0, 0, -4);
-  gl.rotate(angleX, 1, 0, 0);
-  gl.rotate(angleY, 0, 1, 0);
-  gl.translate(0, -0.25, 0);
 
   // Alternate between a shadow from a random point on the sky hemisphere
   // and a random point near the light (creates a soft shadow)
   var dir = GL.Vector.randomDirection();
-  //flip = !flip;
+  flip = !flip;
   if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-  quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
-
-  // Draw the mesh with the ambient occlusion so far
-  quadMesh.lightmapTexture.bind();
-  textureMapShader.draw(mesh);
-
-
-  gl.begin2D();
-  gl.translate(200, 200, 0);
-  textureMapShader.draw(texMech);
-  gl.end2D();
+  //dir = new GL.Vector(1, 1, 1).unit();
+  //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
+  renderLightmap(dir);
   
 
+  // Draw the mesh with the ambient occlusion so far
+  //quadMesh.lightmapTexture.bind();
+  lightmapper.texture.bind();
+  //textureMapShader.draw(mesh);
+
+  //scene.draw(selectShader);
+  textureMapShader.uniforms({lightmapMult : lightmapper.delta});
+  scene.draw(textureMapShader, ['color', 'lightmapOff', 'transform']);
+
+  textureMapShader.uniforms({lightmapMult : 1.0});
+  //depthMap.bind();
+  //gl.begin2D();
+  //textureMapShader.draw(texMech);
+  //gl.end2D();
 };
 
 gl.fullscreen();

@@ -1,0 +1,6 @@
+{
+	name : 'foo',
+	value : 'bar',
+	goo : function() {
+	}
+}
