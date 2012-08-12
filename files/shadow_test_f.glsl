@@ -6,7 +6,7 @@ varying vec3 normal;
 
 void main() {
   /* Run shadow test */
-  const float bias = -0.0027;
+  const float bias = -0.00299;
   float depth = texture2D(depthMap, coord.xy / coord.w * 0.5 + 0.5).r;
   float shadow = (bias + coord.z / coord.w * 0.5 + 0.5 - depth > 0.0) ? 1.0 : 0.0;
   

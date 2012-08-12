@@ -89,7 +89,7 @@ function renderLightmap(dir) {
   gl.loadIdentity();
 
   var at = c.subtract(dir);
-  var useY = true;//(dir.max() != dir.y);
+  var useY = (dir.max() != dir.y);
   var up = new GL.Vector(!useY, useY, 0).cross(dir);
   gl.lookAt(c.x, c.y, c.z, at.x, at.y, at.z, up.x, up.y, up.z);
 
@@ -354,15 +354,16 @@ gl.ondraw = function() {
   gl.clearColor(0.9, 0.9, 0.9, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Alternate between a shadow from a random point on the sky hemisphere
-  // and a random point near the light (creates a soft shadow)
-  var dir = GL.Vector.randomDirection();
-  flip = !flip;
-  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-  //dir = new GL.Vector(1, 1, 1).unit();
-  //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
-  renderLightmap(dir);
-  
+  for(var i = 1; i < 10; i++) {
+    // Alternate between a shadow from a random point on the sky hemisphere
+    // and a random point near the light (creates a soft shadow)
+    var dir = GL.Vector.randomDirection();
+    flip = !flip;
+    if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
+    //dir = new GL.Vector(1, 1, 1).unit();
+    //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
+    renderLightmap(dir.y < 0 ? dir.negative() : dir);
+  }
 
   // Draw the mesh with the ambient occlusion so far
   //quadMesh.lightmapTexture.bind();

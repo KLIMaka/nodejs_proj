@@ -20,7 +20,7 @@ void main() {
    * infinitely thin geometry and is not needed with the solid geometry
    * present in most scenes. I made this hack up and have not seen it before.
    */
-  pos.xyz += normalize(cross(normal, cross(normal, light))) * 0.02;
+  /*pos.xyz += normalize(cross(normal, cross(normal, light))) * 0.02;*/
   
   coord = shadowMapMatrix * pos;
   vec2 tc = gl_TexCoord.st * lightmapMult + lightmapOff;
