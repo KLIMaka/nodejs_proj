@@ -84,8 +84,10 @@ asyncMesh.prototype = {
 
 	calcTransform : function() {
 		GL.Matrix.identity(this.transform);
-		this.transform = this.transform.multiply(GL.Matrix.scale(this.scale, this.scale, this.scale, this.tmp_mat));
-		this.transform = this.transform.multiply(GL.Matrix.translate(this.pos[0], this.pos[1], this.pos[2], this.tmp_mat));
+		this.transform.m[3] = this.pos[0];
+		this.transform.m[7] = this.pos[1];
+		this.transform.m[11] = this.pos[2];
+		this.transform.m[0] = this.transform.m[5] = this.transform.m[10] = this.scale;
 		this.uniforms.transform = this.transform;
 	},
 
@@ -207,9 +209,12 @@ camera.prototype = {
 	},
 
 	getMatrix : function () {
-		var mat = GL.Matrix.rotate(this.angleX, 1, 0, 0);
-		mat = mat.multiply(GL.Matrix.rotate(this.angleY, 0, 1, 0));
-		mat = mat.multiply(GL.Matrix.translate(this.pos.x, this.pos.y, this.pos.z));
+		var mat = GL.Matrix.rotate(this.angleY, 0, 1, 0);
+		mat = mat.multiply(GL.Matrix.rotate(this.angleX, 1, 0, 0));
+		//mat = mat.multiply(GL.Matrix.translate(this.pos.x, this.pos.y, this.pos.z));
+		mat.m[3] = this.pos.x;
+		mat.m[7] = this.pos.y;
+		mat.m[11] = this.pos.z;
 		return mat;
 	},
 }

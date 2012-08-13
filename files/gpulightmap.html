@@ -142,9 +142,13 @@ gl.onmousemove = function(e) {
     if (mouse.object != 0) {
       var obj = scene.get(mouse.object);
       var mat = cam.getMatrix();
-      var x = mat.transformVector(new GL.Vector(1, 0, 0));
-      var y = mat.transformVector(new GL.Vector(0, -1, 0));
-      var res = x.multiply(e.deltaX).add(y.multiply(e.deltaY)).multiply(0.01);
+      var orig = new GL.Vector(obj.transform.m[3], obj.transform.m[7], obj.transform.m[11]);
+      var len = mat.transformPoint(orig).z;
+      console.log(len);
+      //var len = orig.subtract(cam.pos).length();
+      var x = mat.transformVector(new GL.Vector(1, 0, 0)).unit();
+      var y = mat.transformVector(new GL.Vector(0, -1, 0)).unit();
+      var res = x.multiply(e.deltaX).add(y.multiply(e.deltaY)).multiply(0.001*len);
       obj.move(res.x, res.y, res.z);
 
     } else { 
