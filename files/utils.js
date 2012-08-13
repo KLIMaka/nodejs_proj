@@ -46,8 +46,8 @@ function asyncShader(shader) {
 	};
 
 	var vl = undefined, fl = undefined;
-	loadFile(shader+'_v.glsl', function(data){ vl = data; if (fl != undefined) s._load(vl, fl)});
-	loadFile(shader+'_f.glsl', function(data){ fl = data; if (vl != undefined) s._load(vl, fl)});
+	loadFile('shaders/'+shader+'_v.glsl', function(data){ vl = data; if (fl != undefined) s._load(vl, fl)});
+	loadFile('shaders/'+shader+'_f.glsl', function(data){ fl = data; if (vl != undefined) s._load(vl, fl)});
 
 	return s;
 }
@@ -95,6 +95,10 @@ asyncMesh.prototype = {
 		this.pos[2] = z;
 		this.calcTransform();
 		return this;
+	},
+
+	move : function(dx, dy, dz) {
+		this.setPos(this.pos[0]+dx, this.pos[1]+dy, this.pos[2]+dz);
 	},
 
 	setScale : function(scale) {
@@ -165,6 +169,10 @@ drawer.prototype = {
     	mms.center = mms.min.add(mms.max).divide(2);
     	mms.radius = mms.min.add(mms.center).length();
 	},
+
+	get : function(id) {
+		return this.objs[id];
+	}
 }
 
 function camera() {
@@ -172,13 +180,14 @@ function camera() {
 	this.angleX = 0;
 	this.angleY = 0;
 	this.dist   = 4;
+	this.pos = new GL.Vector(-5,0.1,5);
 }
 
 camera.prototype = {
 
 	updateAngles : function(dx, dy) {
-		this.angleY += dx;
-	    this.angleX += dy;
+		this.angleY -= dx * 0.25;
+	    this.angleX -= dy * 0.25;
 	    this.angleX = Math.max(-90, Math.min(90, this.angleX));
 	},
 
@@ -192,21 +201,28 @@ camera.prototype = {
 	},
 
 	applyTransform : function() {
-		gl.translate(0, 0, -this.dist);
-		gl.rotate(this.angleX, 1, 0, 0);
-		gl.rotate(this.angleY, 0, 1, 0);
+		gl.rotate(-this.angleX, 1, 0, 0);
+		gl.rotate(-this.angleY, 0, 1, 0);
+		gl.translate(-this.pos.x, -this.pos.y, -this.pos.z);
+	},
+
+	getMatrix : function () {
+		var mat = GL.Matrix.rotate(this.angleX, 1, 0, 0);
+		mat = mat.multiply(GL.Matrix.rotate(this.angleY, 0, 1, 0));
+		mat = mat.multiply(GL.Matrix.translate(this.pos.x, this.pos.y, this.pos.z));
+		return mat;
 	},
 }
 
 var pow8 = Math.pow(2,8);
 var pow16 = Math.pow(2,16);
 var pow24 = Math.pow(2,24);
+var pdata = new Uint8Array(4);
 
 function pick() {
-
-	var p = new Uint8Array(4);
-	gl.readPixels(mouse.x, mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p);
-	return p[0] + p[1]*pow8 + p[2]*pow16;
+	gl.readPixels(mouse.x, gl.drawingBufferHeight-mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pdata);
+	if (mouse.free)
+		mouse.object = pdata[0] + pdata[1]*pow8 + pdata[2]*pow16;
 }
 
 

@@ -112,7 +112,6 @@ var processor = {
         norms : [],
         vts   : [],
       }
-      console.log(lines);
 
       for (var n in lines) {
         var line = lines[n];
