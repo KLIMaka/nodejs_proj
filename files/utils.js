@@ -63,7 +63,7 @@ function asyncMesh(file) {
 	this.mesh = gl._tmpMesh || (gl._tmpMesh = new GL.Mesh.cube({coords:true}));
 	this.transform = new GL.Matrix();
 	this.scale = 1;
-	this.pos = [0,0,0];
+	this.pos = new GL.Vector();
 	this.uniforms = {
 		id : intToVec(this.id),
 		transform : this.transform,
@@ -84,23 +84,26 @@ asyncMesh.prototype = {
 
 	calcTransform : function() {
 		GL.Matrix.identity(this.transform);
-		this.transform.m[3] = this.pos[0];
-		this.transform.m[7] = this.pos[1];
-		this.transform.m[11] = this.pos[2];
+		this.transform.m[3] = this.pos.x;
+		this.transform.m[7] = this.pos.y;
+		this.transform.m[11] = this.pos.z;
 		this.transform.m[0] = this.transform.m[5] = this.transform.m[10] = this.scale;
-		this.uniforms.transform = this.transform;
 	},
 
 	setPos : function(x, y, z) {
-		this.pos[0] = x;
-		this.pos[1] = y;
-		this.pos[2] = z;
+		this.pos.x = x;
+		this.pos.y = y;
+		this.pos.z = z;
 		this.calcTransform();
 		return this;
 	},
 
 	move : function(dx, dy, dz) {
-		this.setPos(this.pos[0]+dx, this.pos[1]+dy, this.pos[2]+dz);
+		this.pos.x += dx;
+		this.pos.y += dy;
+		this.pos.z += dz;
+		this.calcTransform();
+		return this;
 	},
 
 	setScale : function(scale) {
@@ -227,6 +230,26 @@ function pick() {
 		mouse.object = pdata[0] + pdata[1]*pow8 + pdata[2]*pow16;
 }
 
+GL.Raytracer.hitTestMesh = function(origin, ray, obj) {
+	var t = Number.MAX_VALUE;
+	var finalHit = null;
+	var verts = obj.mesh.vertices;
+	var tris = obj.mesh.triangles;
+
+	for (i in tris) {
+		var tri = tris[i];
+		var mat = obj.transform;
+		var a = mat.transformPoint(GL.Vector.fromArray(verts[tri[0]]));
+		var b = mat.transformPoint(GL.Vector.fromArray(verts[tri[1]]));
+		var c = mat.transformPoint(GL.Vector.fromArray(verts[tri[2]]));
+		var result = GL.Raytracer.hitTestTriangle(origin, ray, a, b, c);
+
+		if (result != null && result.t < t) {
+			finalHit = result;
+		} 
+	}
+	return finalHit;
+}
 
 function extend(gl) {
 

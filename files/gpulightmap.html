@@ -136,12 +136,7 @@ var mouse = {
   free : true,
 }
 var drag_coef = 0.83;
-var drag_mode = {
-  x : 1,
-  y : 0,
-  z : 1,
-}
-
+var drag_normal = new GL.Vector(0, 1, 0);
 var cam = new camera();
 cam.setZoom(4);
 
@@ -154,11 +149,9 @@ gl.onmousedown = function(e) {
     var obj = scene.get(mouse.object);
     var tracer = new GL.Raytracer();
     var ray = tracer.getRayForPixel(e.x, e.y);
-    result = {
-      hit : new GL.Vector(obj.pos[0], obj.pos[1], obj.pos[2]),
-      normal : new GL.Vector(0, 1, 0).unit(),
-    };
-    originalOffset = new GL.Vector(obj.pos[0], obj.pos[1], obj.pos[2]);
+    result = GL.Raytracer.hitTestMesh(tracer.eye, ray, obj);
+    result.normal = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);//drag_normal;
+    originalOffset = obj.pos.clone();
   }
 }
 
@@ -167,24 +160,6 @@ gl.onmousemove = function(e) {
     mouse.free = false;
     
     if (mouse.object != 0) {
-
-      // var obj = scene.get(mouse.object);
-      // var mat = cam.getMatrix();
-      // var tmat = mat.multiply(obj.transform);
-      // var ori = tmat.transformPoint(new GL.Vector(0,0,0));
-      // var len = -ori.z;
-
-      // var imat = mat.inverse();
-      // var x = imat.transformVector(new GL.Vector(1, 0, 0)).unit();
-      // var y = imat.transformVector(new GL.Vector(0, 1, 0)).unit();
-
-      // var mins = Math.min(gl.drawingBufferWidth, gl.drawingBufferHeight)
-      // var dx = (1.0 / mins) * e.deltaX * len * drag_coef;
-      // var dy = (1.0 / mins) * -e.deltaY * len * drag_coef;
-      
-      // var res = x.multiply(dx).add(y.multiply(dy));
-
-      // obj.move(drag_mode.x*res.x, drag_mode.y*res.y, drag_mode.z*res.z);
 
       var obj = scene.get(mouse.object);
       var tracer = new GL.Raytracer();
@@ -225,11 +200,6 @@ gl.canvas.onmousewheel = function(e) {
 }
 
 gl.canvas.onclick = function(e) {
-  
-  var tracer = new GL.Raytracer();
-  var r = tracer.getRayForPixel(e.x, e.y);
-
-  console.log(r.x + ' ' + r.y + ' ' + r.z);
 }
 
 var flip = false;
