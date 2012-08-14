@@ -61,17 +61,20 @@ var cube = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
 var cube1 = new asyncMesh('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
 var cube2 = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
 var plane = new asyncMesh('plane.obj').setScale(10);
+var plane1 = new asyncMesh('plane.obj').setPos(10, 0, 10);
 
 scene.add(plane);
 scene.add(cube);
 scene.add(cube1);
 scene.add(cube2);
+scene.add(plane1);
 
-var lightmapper = new lightAtlas(512, 2);
+var lightmapper = new lightAtlas(512, 3);
 lightmapper.allocate(plane);
 lightmapper.allocate(cube);
 lightmapper.allocate(cube1);
 lightmapper.allocate(cube2);
+lightmapper.allocate(plane1);
 
 
 var exp_size = 4;
@@ -132,24 +135,64 @@ var mouse = {
   object : null,
   free : true,
 }
+var drag_coef = 0.83;
+var drag_mode = {
+  x : 1,
+  y : 0,
+  z : 1,
+}
+
 var cam = new camera();
 cam.setZoom(4);
+
+var result;
+var originalOffset;
+
+gl.onmousedown = function(e) {
+
+  if (mouse.object != 0) {
+    var obj = scene.get(mouse.object);
+    var tracer = new GL.Raytracer();
+    var ray = tracer.getRayForPixel(e.x, e.y);
+    result = {
+      hit : new GL.Vector(obj.pos[0], obj.pos[1], obj.pos[2]),
+      normal : new GL.Vector(0, 1, 0).unit(),
+    };
+    originalOffset = new GL.Vector(obj.pos[0], obj.pos[1], obj.pos[2]);
+  }
+}
 
 gl.onmousemove = function(e) {
   if (e.dragging) {
     mouse.free = false;
     
     if (mouse.object != 0) {
+
+      // var obj = scene.get(mouse.object);
+      // var mat = cam.getMatrix();
+      // var tmat = mat.multiply(obj.transform);
+      // var ori = tmat.transformPoint(new GL.Vector(0,0,0));
+      // var len = -ori.z;
+
+      // var imat = mat.inverse();
+      // var x = imat.transformVector(new GL.Vector(1, 0, 0)).unit();
+      // var y = imat.transformVector(new GL.Vector(0, 1, 0)).unit();
+
+      // var mins = Math.min(gl.drawingBufferWidth, gl.drawingBufferHeight)
+      // var dx = (1.0 / mins) * e.deltaX * len * drag_coef;
+      // var dy = (1.0 / mins) * -e.deltaY * len * drag_coef;
+      
+      // var res = x.multiply(dx).add(y.multiply(dy));
+
+      // obj.move(drag_mode.x*res.x, drag_mode.y*res.y, drag_mode.z*res.z);
+
       var obj = scene.get(mouse.object);
-      var mat = cam.getMatrix();
-      var orig = new GL.Vector(obj.transform.m[3], obj.transform.m[7], obj.transform.m[11]);
-      var len = mat.transformPoint(orig).z;
-      console.log(len);
-      //var len = orig.subtract(cam.pos).length();
-      var x = mat.transformVector(new GL.Vector(1, 0, 0)).unit();
-      var y = mat.transformVector(new GL.Vector(0, -1, 0)).unit();
-      var res = x.multiply(e.deltaX).add(y.multiply(e.deltaY)).multiply(0.001*len);
-      obj.move(res.x, res.y, res.z);
+      var tracer = new GL.Raytracer();
+      var ray = tracer.getRayForPixel(e.x, e.y);
+      var t = result.hit.subtract(tracer.eye).dot(result.normal) / ray.dot(result.normal);
+      var hit = tracer.eye.add(ray.multiply(t));
+      var offset = originalOffset.add(hit.subtract(result.hit));
+      obj.setPos(offset.x, offset.y, offset.z);
 
     } else { 
       cam.updateAngles(e.deltaX, e.deltaY);
@@ -182,7 +225,11 @@ gl.canvas.onmousewheel = function(e) {
 }
 
 gl.canvas.onclick = function(e) {
-  console.log(mouse.object);
+  
+  var tracer = new GL.Raytracer();
+  var r = tracer.getRayForPixel(e.x, e.y);
+
+  console.log(r.x + ' ' + r.y + ' ' + r.z);
 }
 
 var flip = false;
@@ -204,21 +251,21 @@ gl.ondraw = function() {
   gl.clearColor(0.9, 0.9, 0.9, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  for(var i = 1; i < 10; i++) {
-    // Alternate between a shadow from a random point on the sky hemisphere
-    // and a random point near the light (creates a soft shadow)
-    var dir = GL.Vector.randomDirection();
-    flip = !flip;
-    if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-    //dir = new GL.Vector(1, 1, 1).unit();
-    //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
-    renderLightmap(dir.y < 0 ? dir.negative() : dir);
-  }
+  for (var i = 0; i < 10; i++) {
+  // Alternate between a shadow from a random point on the sky hemisphere
+  // and a random point near the light (creates a soft shadow)
+  var dir = GL.Vector.randomDirection();
+  //flip = !flip;
+  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
+  //dir = new GL.Vector(1, 1, 1).unit();
+  //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
+  renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
   // Draw the mesh with the ambient occlusion so far
   //quadMesh.lightmapTexture.bind();
   lightmapper.texture.bind();
   //textureMapShader.draw(mesh);
+  }
 
   //scene.draw(selectShader);
   textureMapShader.uniforms({'lightmapMult' : lightmapper.delta});

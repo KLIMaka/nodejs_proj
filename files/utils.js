@@ -209,12 +209,9 @@ camera.prototype = {
 	},
 
 	getMatrix : function () {
-		var mat = GL.Matrix.rotate(this.angleY, 0, 1, 0);
-		mat = mat.multiply(GL.Matrix.rotate(this.angleX, 1, 0, 0));
-		//mat = mat.multiply(GL.Matrix.translate(this.pos.x, this.pos.y, this.pos.z));
-		mat.m[3] = this.pos.x;
-		mat.m[7] = this.pos.y;
-		mat.m[11] = this.pos.z;
+		var mat = GL.Matrix.rotate(-this.angleX, 1, 0, 0);
+		mat = mat.multiply(GL.Matrix.rotate(-this.angleY, 0, 1, 0));
+		mat = mat.multiply(GL.Matrix.translate(-this.pos.x, -this.pos.y, -this.pos.z));
 		return mat;
 	},
 }

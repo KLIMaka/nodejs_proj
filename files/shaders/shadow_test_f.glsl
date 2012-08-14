@@ -12,5 +12,5 @@ void main() {
   
   /* Points on polygons facing away from the light are always in shadow */
   float color = dot(normal, light) > 0.0 ? 1.0 - shadow : 0.0;
-  gl_FragColor = vec4(vec3(color), 1.0 / (1.0 + sampleCount));
+  gl_FragColor = vec4(vec3(color)*dot(normal, light), 1.0 / (1.0 + sampleCount));
 }
