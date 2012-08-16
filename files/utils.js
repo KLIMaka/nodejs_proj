@@ -1,23 +1,4 @@
 
-var lastReq = 0;
-function loadFile(file, callback) {
-	var reqID = lastReq++;
-	var head = document.getElementsByTagName('head')[0];
-	var s = document.createElement('script');
-	var cont = undefined;
-	s.src = '/file_load/id'+reqID+'/' + file;
-	s.onload = function() {
-		cont = window['id'+reqID];
-		delete window['id'+reqID];
-		if (callback != undefined) 
-			callback(cont);
-	}
-	head.appendChild(s);
-	return function() {
-		return cont;
-	}
-}
-
 function asyncShader(shader) {
 
 	var s = {
@@ -46,78 +27,17 @@ function asyncShader(shader) {
 	};
 
 	var vl = undefined, fl = undefined;
-	loadFile('shaders/'+shader+'_v.glsl', function(data){ vl = data; if (fl != undefined) s._load(vl, fl)});
-	loadFile('shaders/'+shader+'_f.glsl', function(data){ fl = data; if (vl != undefined) s._load(vl, fl)});
+	Cache.load('shaders/'+shader+'_v.glsl', function(data){ vl = data; if (fl != undefined) s._load(vl, fl)});
+	Cache.load('shaders/'+shader+'_f.glsl', function(data){ fl = data; if (vl != undefined) s._load(vl, fl)});
 
 	return s;
-}
-
-function intToVec(val) {
-	return [(val&0xff)/256, ((val>>>8)&0xff)/256, ((val>>>16)&0xff)/256, ((val>>>24)&0xff)/256];
-}
-
-var meshID = 1;
-function asyncMesh(file) {
-
-	this.id = meshID++;
-	this.mesh = gl._tmpMesh || (gl._tmpMesh = new GL.Mesh.cube({coords:true}));
-	this.transform = new GL.Matrix();
-	this.scale = 1;
-	this.pos = new GL.Vector();
-	this.uniforms = {
-		id : intToVec(this.id),
-		transform : this.transform,
-	};
-	this.load(file);
-}
-
-asyncMesh.prototype = {
-
-	tmp_mat : new GL.Matrix(),
-
-	load : function(file) {
-		var m = this;
-		loadFile(file, function(data){
-			m.mesh = GL.Mesh.load(data);
-		});
-	},
-
-	calcTransform : function() {
-		GL.Matrix.identity(this.transform);
-		this.transform.m[3] = this.pos.x;
-		this.transform.m[7] = this.pos.y;
-		this.transform.m[11] = this.pos.z;
-		this.transform.m[0] = this.transform.m[5] = this.transform.m[10] = this.scale;
-	},
-
-	setPos : function(x, y, z) {
-		this.pos.x = x;
-		this.pos.y = y;
-		this.pos.z = z;
-		this.calcTransform();
-		return this;
-	},
-
-	move : function(dx, dy, dz) {
-		this.pos.x += dx;
-		this.pos.y += dy;
-		this.pos.z += dz;
-		this.calcTransform();
-		return this;
-	},
-
-	setScale : function(scale) {
-		this.scale = scale;
-		this.calcTransform();
-		return this;
-	},
 }
 
 function lightAtlas(size, rows) {
 
 	this.size = size;
 	this.rows = rows;
-	this.texture = new GL.Texture(size, size, { format: gl.RED, type: gl.FLOAT });
+	this.texture = new GL.Texture(size, size, { format: gl.RED, type: gl.UNSIGNED_BYTE });
 	this.curCell = 0;
 	this.delta = 1.0 / rows;
 }
@@ -142,7 +62,9 @@ function drawer() {
 
 drawer.prototype = {
 
-	draw : function(shader, uniforms) {
+	draw : function(shader, uniforms, mode) {
+
+		mode = mode == undefined ? gl.TRIANGLES : mode;
 		for (i in this.objs) {
 			var obj = this.objs[i];
 
@@ -150,11 +72,26 @@ drawer.prototype = {
 				var unis = {};
 				for (u in uniforms) 
 					unis[uniforms[u]] = obj.uniforms[uniforms[u]];
-				shader.uniforms(unis).draw(obj.mesh);
-			} else {
-				shader.draw(obj.mesh);
+				shader.uniforms(unis);
 			}
+			shader.draw(obj.mesh, mode);
 		}
+	},
+
+	drawID : function(id, shader, uniforms, mode) {
+		
+		var obj = this.objs[id];
+		if (obj == undefined) return;
+
+		mode = mode == undefined ? gl.TRIANGLES : mode;
+		if (uniforms != undefined)  {
+			var unis = {};
+			for (u in uniforms) 
+				unis[uniforms[u]] = obj.uniforms[uniforms[u]];
+			shader.uniforms(unis);
+		}
+
+		shader.draw(obj.mesh, mode);
 	},
 
 	add : function(obj) {

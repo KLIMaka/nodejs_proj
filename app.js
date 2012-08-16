@@ -106,11 +106,22 @@ var processor = {
         normals  : [],
         coords   : [],
         triangles: [],
+        lines    : [],
       };
       var data = {
         verts : [],
         norms : [],
         vts   : [],
+      };
+
+      var unique = {};
+      var addLine = function(id1, id2) {
+        var line = [Math.min(id1,id2), Math.max(id1,id2)];
+        var key = JSON.stringify(line);
+        if (!(key in unique)) {
+          result.lines.push(line);
+          unique[key] = true;
+        }
       }
 
       for (var n in lines) {
@@ -159,9 +170,16 @@ var processor = {
             if (t[10] != undefined) {
               result.triangles.push([tri, tri+1, tri+2]);
               result.triangles.push([tri, tri+2, tri+3]);
+              addLine(tri, tri+1);
+              addLine(tri+1, tri+2);
+              addLine(tri+2, tri+3);
+              addLine(tri+3, tri);
               tri += 4;
             } else {
               result.triangles.push([tri, tri+1, tri+2]);
+              addLine(tri, tri+1);
+              addLine(tri+1, tri+2);
+              addLine(tri+2, tri);
               tri += 3;
             }
         }

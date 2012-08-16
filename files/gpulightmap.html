@@ -15,18 +15,15 @@ computed using rasterization. That is what this example does.
 -->
 <!DOCTYPE html>
 <html><body>
-  <script src="lightgl.js"></script>
-  <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
-  <script src="utils.js"></script>
+  <script src="lightgl.js" type="text/javascript"></script>
+  <script src="cache.js" type="text/javascript"></script>
+  <script src="entity.js" type="text/javascript"></script>
+  <script src="utils.js" type="text/javascript"></script>
   <script>
 
 var angleX = 30;
 var angleY = 30;
 var gl = GL.create({
-  // If we use hardware multisampling then there will be leaking around the
-  // edges of quads due to extrapolation. For more details see the article at
-  // http://www.opengl.org/pipeline/article/vol003_6/. These artifacts can be
-  // avoided by using centroid sampling except it isn't supported by WebGL.
   antialias: true,
 });
 extend(gl);
@@ -57,19 +54,19 @@ texMech.triangles.push([0, 3, 2]);
 texMech.compile();
 
 var scene = new drawer();
-var cube = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
-var cube1 = new asyncMesh('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
-var cube2 = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
-var plane = new asyncMesh('plane.obj').setScale(10);
-var plane1 = new asyncMesh('plane.obj').setPos(10, 0, 10);
-var teapot = new asyncMesh('head.obj').setScale(0.03);
+var cube = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
+var cube1 = new Entity.Model('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
+var cube2 = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
+var plane = new Entity.Model('plane.obj').setScale(10);
+var plane1 = new Entity.Model('plane.obj').setPos(10, 0, 10);
+var head = new Entity.Model('head.obj').setScale(0.03);
 
 scene.add(plane);
 scene.add(cube);
 scene.add(cube1);
 scene.add(cube2);
 scene.add(plane1);
-scene.add(teapot);
+scene.add(head);
 
 var lightmapper = new lightAtlas(1024, 3);
 lightmapper.allocate(plane);
@@ -77,10 +74,11 @@ lightmapper.allocate(cube);
 lightmapper.allocate(cube1);
 lightmapper.allocate(cube2);
 lightmapper.allocate(plane1);
-lightmapper.allocate(teapot);
+lightmapper.allocate(head);
 
 
 var exp_size = 4;
+var sampleCount = 0;
 function renderLightmap(dir) {
 
   // Construct a camera looking from the light toward the object
@@ -120,7 +118,7 @@ function renderLightmap(dir) {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     shadowTestShader.uniforms({
       shadowMapMatrix: shadowMapMatrix,
-      sampleCount: 1000,
+      sampleCount: sampleCount++,
       light: dir,
       lightmapMult: lightmapper.delta,
     });
@@ -153,7 +151,7 @@ gl.onmousedown = function(e) {
     var ray = tracer.getRayForPixel(e.x, e.y);
     result = GL.Raytracer.hitTestMesh(tracer.eye, ray, obj);
     result.normal = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);//drag_normal;
-    originalOffset = obj.pos.clone();
+    originalOffset = obj.position.clone();
   }
 }
 
@@ -170,6 +168,7 @@ gl.onmousemove = function(e) {
       var hit = tracer.eye.add(ray.multiply(t));
       var offset = originalOffset.add(hit.subtract(result.hit));
       obj.setPos(offset.x, offset.y, offset.z);
+      sampleCount = 0;
 
     } else { 
       cam.updateAngles(e.deltaX, e.deltaY);
@@ -225,12 +224,14 @@ gl.ondraw = function() {
   gl.clearColor(0.9, 0.9, 0.9, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Alternate between a shadow from a random point on the sky hemisphere
-  // and a random point near the light (creates a soft shadow)
-  var dir = GL.Vector.randomDirection();
-  flip = !flip;
-  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-  renderLightmap(dir.y < 0 ? dir.negative() : dir);
+  if (sampleCount < 256) {
+    // Alternate between a shadow from a random point on the sky hemisphere
+    // and a random point near the light (creates a soft shadow)
+    var dir = GL.Vector.randomDirection();
+    flip = !flip;
+    if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
+    renderLightmap(dir.y < 0 ? dir.negative() : dir);
+  }
 
   // Draw the mesh with the ambient occlusion so far
   lightmapper.texture.bind();
@@ -239,6 +240,16 @@ gl.ondraw = function() {
   scene.draw(textureMapShader, ['lightmapOff', 'transform']);
   // lambertShader.uniforms({light : light});
   // scene.draw(lambertShader, ['transform']);
+
+  if (mouse.object != 0) {
+    var obj = scene.get(mouse.object);
+    if (obj.mesh.lines == undefined) {
+      obj.mesh.computeWireframe();
+    }
+    textureMapShader.uniforms({wireframe:1.0});
+    scene.drawID(mouse.object, textureMapShader, ['transform'], gl.LINES);
+    textureMapShader.uniforms({wireframe:0.0});
+  }
 
   textureMapShader.uniforms({lightmapMult : 1.0});
   //depthMap.bind();
@@ -250,7 +261,8 @@ gl.ondraw = function() {
 gl.fullscreen();
 gl.animate();
 gl.enable(gl.CULL_FACE);
+gl.enable(gl.POLYGON_OFFSET_FILL);
 gl.enable(gl.DEPTH_TEST);
 
-  </script>
+</script>
 </body></html>
