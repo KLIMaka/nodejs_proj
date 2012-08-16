@@ -131,7 +131,6 @@ lightAtlas.prototype = {
 		this.curCell++;
 		mesh.uniforms.lightmapOff = [offX*this.delta, offY*this.delta];
 	}
-
 }
 
 function drawer() {
@@ -143,11 +142,11 @@ function drawer() {
 
 drawer.prototype = {
 
-	draw : function(shader, uniforms, trans) {
+	draw : function(shader, uniforms) {
 		for (i in this.objs) {
 			var obj = this.objs[i];
 
-			if (arguments.length >= 2) {
+			if (arguments.length == 2) {
 				var unis = {};
 				for (u in uniforms) 
 					unis[uniforms[u]] = obj.uniforms[uniforms[u]];

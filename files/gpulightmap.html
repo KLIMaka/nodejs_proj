@@ -99,7 +99,6 @@ function renderLightmap(dir) {
   gl.lookAt(c.x, c.y, c.z, at.x, at.y, at.z, up.x, up.y, up.z);
 
   // Render the object viewed from the light using a shader that returns the fragment depth
-  var mesh = this.mesh;
   var shadowMapMatrix = gl.projectionMatrix.multiply(gl.modelviewMatrix);
   depthMap.drawTo(function() {
     gl.clearColor(1, 1, 1, 1);
@@ -209,6 +208,8 @@ var flip = false;
 var r = 0.1;
 var selectShader = asyncShader('select');
 var uiShader = asyncShader('ui');
+var lambertShader = asyncShader('lambert');
+var light = new GL.Vector(1, 1, 1);
 
 gl.ondraw = function() {
   
@@ -224,25 +225,20 @@ gl.ondraw = function() {
   gl.clearColor(0.9, 0.9, 0.9, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  for (var i = 0; i < 10; i++) {
   // Alternate between a shadow from a random point on the sky hemisphere
   // and a random point near the light (creates a soft shadow)
   var dir = GL.Vector.randomDirection();
   flip = !flip;
   if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-  //dir = new GL.Vector(1, 1, 1).unit();
-  //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
   renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
   // Draw the mesh with the ambient occlusion so far
-  //quadMesh.lightmapTexture.bind();
   lightmapper.texture.bind();
-  //textureMapShader.draw(mesh);
-  }
 
-  //scene.draw(selectShader);
   textureMapShader.uniforms({'lightmapMult' : lightmapper.delta});
   scene.draw(textureMapShader, ['lightmapOff', 'transform']);
+  // lambertShader.uniforms({light : light});
+  // scene.draw(lambertShader, ['transform']);
 
   textureMapShader.uniforms({lightmapMult : 1.0});
   //depthMap.bind();
