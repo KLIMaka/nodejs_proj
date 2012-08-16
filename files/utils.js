@@ -182,10 +182,10 @@ drawer.prototype = {
 
 function camera() {
 
-	this.angleX = 0;
-	this.angleY = 0;
+	this.angleX = -35;
+	this.angleY = -45;
 	this.dist   = 4;
-	this.pos = new GL.Vector(-5,0.1,5);
+	this.pos = new GL.Vector(-5,5,5);
 }
 
 camera.prototype = {

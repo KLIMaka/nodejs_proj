@@ -62,19 +62,22 @@ var cube1 = new asyncMesh('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
 var cube2 = new asyncMesh('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
 var plane = new asyncMesh('plane.obj').setScale(10);
 var plane1 = new asyncMesh('plane.obj').setPos(10, 0, 10);
+var teapot = new asyncMesh('head.obj').setScale(0.03);
 
 scene.add(plane);
 scene.add(cube);
 scene.add(cube1);
 scene.add(cube2);
 scene.add(plane1);
+scene.add(teapot);
 
-var lightmapper = new lightAtlas(512, 3);
+var lightmapper = new lightAtlas(1024, 3);
 lightmapper.allocate(plane);
 lightmapper.allocate(cube);
 lightmapper.allocate(cube1);
 lightmapper.allocate(cube2);
 lightmapper.allocate(plane1);
+lightmapper.allocate(teapot);
 
 
 var exp_size = 4;
@@ -225,7 +228,7 @@ gl.ondraw = function() {
   // Alternate between a shadow from a random point on the sky hemisphere
   // and a random point near the light (creates a soft shadow)
   var dir = GL.Vector.randomDirection();
-  //flip = !flip;
+  flip = !flip;
   if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
   //dir = new GL.Vector(1, 1, 1).unit();
   //quadMesh.drawShadow(dir.y < 0 ? dir.negative() : dir);
@@ -242,7 +245,7 @@ gl.ondraw = function() {
   scene.draw(textureMapShader, ['lightmapOff', 'transform']);
 
   textureMapShader.uniforms({lightmapMult : 1.0});
-  depthMap.bind();
+  //depthMap.bind();
   gl.begin2D();
   uiShader.draw(texMech);
   gl.end2D();

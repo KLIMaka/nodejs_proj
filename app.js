@@ -122,36 +122,48 @@ var processor = {
 
         switch(com) {
           case 'v':
-            var vert = line.match(/v ([0-9\.\-]+) ([0-9\.\-]+) ([0-9\.\-]+)/);
+            var vert = line.match(/v ([0-9e\.\-]+) ([0-9e\.\-]+) ([0-9e\.\-]+)/);
             data.verts.push([parseFloat(vert[1]), parseFloat(vert[2]), parseFloat(vert[3])]);
             break;
 
           case 'vn':
-            var norm = line.match(/vn ([0-9\.\-]+) ([0-9\.\-]+) ([0-9\.\-]+)/);
+            var norm = line.match(/vn ([0-9e\.\-]+) ([0-9e\.\-]+) ([0-9e\.\-]+)/);
             data.norms.push([parseFloat(norm[1]), parseFloat(norm[2]), parseFloat(norm[3])]);
             break;
 
           case 'vt':
-            var vt = line.match(/vt ([0-9\.\-]+) ([0-9\.\-]+)/);
+            var vt = line.match(/vt ([0-9e\.\-]+) ([0-9e\.\-]+)/);
             data.vts.push([parseFloat(vt[1]), parseFloat(vt[2])]);
             break;
 
           case 'f':
-            var t = line.match(/f ([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+)\/([0-9]+)\/([0-9]+)/);
+            var t = line.match(/f ([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+)\/([0-9]+)\/([0-9]+) ([0-9]+)\/([0-9]+)\/([0-9]+)( ([0-9]+)\/([0-9]+)\/([0-9]+))?/);
             result.vertices.push(data.verts[parseInt(t[1])-1]);
             result.vertices.push(data.verts[parseInt(t[4])-1]);
             result.vertices.push(data.verts[parseInt(t[7])-1]);
+            if (t[10] != undefined)
+              result.vertices.push(data.verts[parseInt(t[11])-1]);
 
             result.coords.push(data.vts[parseInt(t[2])-1]);
             result.coords.push(data.vts[parseInt(t[5])-1]);
             result.coords.push(data.vts[parseInt(t[8])-1]);
+            if (t[10] != undefined)
+              result.coords.push(data.vts[parseInt(t[12])-1]);
 
             result.normals.push(data.norms[parseInt(t[3])-1]);
             result.normals.push(data.norms[parseInt(t[6])-1]);
             result.normals.push(data.norms[parseInt(t[9])-1]);
+            if (t[10] != undefined)
+              result.normals.push(data.norms[parseInt(t[13])-1]);
 
-            result.triangles.push([tri, tri+1, tri+2]);
-            tri += 3;
+            if (t[10] != undefined) {
+              result.triangles.push([tri, tri+1, tri+2]);
+              result.triangles.push([tri, tri+2, tri+3]);
+              tri += 4;
+            } else {
+              result.triangles.push([tri, tri+1, tri+2]);
+              tri += 3;
+            }
         }
       }
       return 'var ' + name + ' = ' + JSON.stringify(result);
