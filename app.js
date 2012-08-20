@@ -81,6 +81,17 @@ app.get(/^\/files\/(.+)$/, function(req, res) {
 
 var processor = {
 	parsers : {
+    
+    'mat' : function(file, name) {
+      var cont = fs.readFileSync('files/'+file, 'UTF-8');
+      var parts = cont.split(/###\r?\n/);
+      var vsh = parts[1].split(/\r?\n/).join('\\\n');
+      var fsh = parts[2].split(/\r?\n/).join('\\\n');
+      return 'var ' + name + ' = ' + parts[0] + ';' +
+              name + '.vsh = "' + vsh + '";' + 
+              name + '.fsh = "' + fsh + '";';
+    },
+
 		'glsl' : function(file, name) {
 			var cont = fs.readFileSync('files/'+file, 'UTF-8');
       var res = cont.split(/\r?\n/).join('\\\n');

@@ -37,7 +37,7 @@ function lightAtlas(size, rows) {
 
 	this.size = size;
 	this.rows = rows;
-	this.texture = new GL.Texture(size, size, { format: gl.RED, type: gl.UNSIGNED_BYTE });
+	this.texture = new GL.Texture(size, size, { format: gl.RED, type: gl.FLOAT });
 	this.curCell = 0;
 	this.delta = 1.0 / rows;
 }

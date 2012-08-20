@@ -64,30 +64,33 @@ texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
 
-var cube = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
-var cube1 = new Entity.Model('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
-var cube2 = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
+// var cube = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
+// var cube1 = new Entity.Model('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
+// var cube2 = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
+// var plane1 = new Entity.Model('plane.obj').setPos(10, 0, 10);
 var plane = new Entity.Model('plane.obj').setScale(10);
-var plane1 = new Entity.Model('plane.obj').setPos(10, 0, 10);
 var head = new Entity.Model('head.obj').setScale(0.03);
 var ogre = new Entity.Model('Ogre.obj').setScale(1);
+var tile = new Entity.Model('tile.obj').setScale(10.0);
 
 drawer.add(plane);
-drawer.add(cube);
-drawer.add(cube1);
-drawer.add(cube2);
-drawer.add(plane1);
+// drawer.add(cube);
+// drawer.add(cube1);
+// drawer.add(cube2);
+// drawer.add(plane1);
 drawer.add(head);
 drawer.add(ogre);
+drawer.add(tile);
 
-var lightmapper = new lightAtlas(1024, 3);
+var lightmapper = new lightAtlas(1024, 2);
 lightmapper.allocate(plane);
-lightmapper.allocate(cube);
-lightmapper.allocate(cube1);
-lightmapper.allocate(cube2);
-lightmapper.allocate(plane1);
+// lightmapper.allocate(cube);
+// lightmapper.allocate(cube1);
+// lightmapper.allocate(cube2);
+// lightmapper.allocate(plane1);
 lightmapper.allocate(head);
 lightmapper.allocate(ogre);
+lightmapper.allocate(tile);
 
 
 var exp_size = 4;
@@ -248,12 +251,12 @@ gl.ondraw = function() {
   gl.clearColor(0.359, 0.398, 0.449, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  if (sampleCount < 256) {
+  // if (sampleCount < 256) {
     var dir = GL.Vector.randomDirection();
     //flip = !flip;
     if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
     renderLightmap(dir.y < 0 ? dir.negative() : dir);
-  }
+  // }
 
   // Draw the mesh with the ambient occlusion so far
   lightmapper.texture.bind();
