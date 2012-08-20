@@ -8,9 +8,10 @@ var Scene = {
 		this.glShader =  Scene.defaultGLShader 
 			         || (Scene.defaultGLShader = new GL.Shader('void main(){gl_Position = vec4(0,0,0,0);}', 'void main(){gl_FragColor = vec4(0,0,0,0);}'));
 
+	    var self = this;
 		var v = null, f = null;
-		Cache.load('shaders/'+shader+'_v.glsl', function(d){v = d; if (f) this.load(v,f);});
-		Cache.load('shaders/'+shader+'_f.glsl', function(d){f = d; if (v) this.load(v,f);});
+		Cache.load('shaders/'+shader+'_v.glsl', function(d){v = d; if (f) self.load(v,f);});
+		Cache.load('shaders/'+shader+'_f.glsl', function(d){f = d; if (v) self.load(v,f);});
 	},
 
 	Drawer : function() {
@@ -79,18 +80,18 @@ Scene.Shader.prototype = {
 			for(i in per) per[i] = obj.uniforms[i];
 			this.glShader.uniforms(per);
 		}
-		this.glShader.draw(obj.mesh, options.mode);
+		this.glShader.draw(obj.mesh, options.mode || gl.TRIANGLES);
 	},
 }
 
 Scene.Drawer.prototype = {
 
 	loadShader : function(file) {
-		this.shaders[file] = new Scene.Shader(shader);
+		this.shaders[file] = new Scene.Shader(file);
 	},
 
 	objIterator : function() {
-	}
+	},
 
 	draw : function(shaderName, options) {
 
@@ -100,6 +101,18 @@ Scene.Drawer.prototype = {
 			shader.draw(this.ents[i], options);
 		}
 		shader.deactivate(options);
+	},
+
+	drawID : function(id, shaderName, options) {
+		
+		var shader = this.shaders[shaderName];
+		shader.activate(options);
+		shader.draw(this.ents[id], options);
+		shader.deactivate(options);
+	},
+
+	add : function(obj) {
+		this.ents[obj.id] = obj;
 	},
 
 }

@@ -203,6 +203,7 @@ app.get(/^\/file_load\/([^\/]+)\/([^\.]+)\.(.+)/, function(req, res) {
 	var file = req.params[1] + '.' + format;
 	var name = req.params[0];
 	
+  res.setHeader('Content-Type', 'text/javascript');
 	res.end(processor.process(file, name, format));
 });
 

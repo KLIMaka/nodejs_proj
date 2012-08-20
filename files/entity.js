@@ -3,6 +3,7 @@ var Entity = {
 
 	lastID : 1,
 	dummyMesh : null,
+	ents : {},
 
 	genID : function() {
 		return Entity.lastID++
@@ -14,6 +15,10 @@ var Entity = {
 
 	getDummyMesh : function() {
 		return Entity.dummyMesh || (Entity.dummyMesh = GL.Mesh.cube({coords:true}));
+	},
+
+	get : function(id) {
+		return this.ents[id];
 	},
 
 	Model : function(file) {
@@ -31,6 +36,8 @@ var Entity = {
 
 		if (file != undefined)
 			this.load(file);
+
+		Entity.ents[this.id] = this;
 	}
 }
 

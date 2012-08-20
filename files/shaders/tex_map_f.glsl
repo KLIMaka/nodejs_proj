@@ -7,7 +7,7 @@ uniform vec2 lightmapOff;
 
 varying vec2 coord;
 
-const vec4 wireframeColor = vec4(0.8, 0.8, 0.1, 1.0);
+const vec4 wireframeColor = vec4(1, 0.8, 0.3, 1.0);
 
 void main() {
 	vec2 tc = coord * lightmapMult + lightmapOff;
