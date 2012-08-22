@@ -47,7 +47,18 @@ Entity.Model.prototype = {
 		var self = this;
 		Cache.load(file, function(mesh){
 			self.mesh = GL.Mesh.load(mesh);
+			if (self.onMeshLoadedCallback) self.onMeshLoadedCallback(self);
 		});
+		return this;
+	},
+
+	onMeshLoaded : function(callback) {
+		this.onMeshLoadedCallback = callback;
+	},
+
+	setMaterial : function(mat) {
+		this.material = mat;
+		if (mat.onBind) mat.onBind(this);
 		return this;
 	},
 

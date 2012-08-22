@@ -101,6 +101,28 @@ Scene.Drawer.prototype = {
 		shader.deactivate(options);
 	},
 
+	drawMat : function() {
+		
+		var prevMat = 0;
+		for(i in this.ents) {
+			var ent = this.ents[i];
+			var mat = ent.material;
+			if (prevMat != mat.id) {
+				mat.begin();
+				prevMat = mat.id
+			}
+			mat.draw(ent);
+		}
+	},
+
+	drawMatOverride : function(mat) {
+		mat.begin();
+		for (i in this.ents) {
+			var ent = this.ents[i];
+			mat.draw(ent);
+		}
+	},
+
 	drawID : function(id, shaderName, options) {
 		
 		var shader = this.shaders[shaderName];

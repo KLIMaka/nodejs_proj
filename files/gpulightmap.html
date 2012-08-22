@@ -27,7 +27,11 @@ computed using rasterization. That is what this example does.
   <script src="lib/cache.js" type="text/javascript"></script>
   <script src="lib/entity.js" type="text/javascript"></script>
   <script src="lib/drawer.js" type="text/javascript"></script>
+  <script src="lib/shaders.js" type="text/javascript"></script>
   <script src="lib/utils.js" type="text/javascript"></script>
+
+  <script src="materials/wireframe.js" type="text/javascript"></script>
+
   <script>
 
 var gl = GL.create({
@@ -63,11 +67,14 @@ texMech.triangles.push([0, 2, 1]);
 texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
+var wmat = Materials.get('wireframe');
+wmat.init();
+wmat.setColor(1, 0, 0, 1);
 
-var plane = new Entity.Model('models/plane.obj').setScale(10);
-var head = new Entity.Model('models/head.obj').setScale(0.03);
-var ogre = new Entity.Model('models/Ogre.obj').setScale(1);
-var tile = new Entity.Model('models/tile.obj').setScale(10.0);
+var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(wmat);
+var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(wmat);
+var ogre = new Entity.Model('models/Ogre.obj').setScale(1).setMaterial(wmat);
+var tile = new Entity.Model('models/tile.obj').setScale(10.0).setMaterial(wmat);
 
 drawer.add(plane);
 drawer.add(head);
@@ -249,12 +256,13 @@ gl.ondraw = function() {
   // Draw the mesh with the ambient occlusion so far
   lightmapper.texture.bind();
 
-  drawer.draw('tex_map', {
-    pre : {lightmapMult : lightmapper.delta}, 
-    per : 
-      { lightmapOff : null
-      , transform : null },
-  });
+  // drawer.draw('tex_map', {
+  //   pre : {lightmapMult : lightmapper.delta}, 
+  //   per : 
+  //     { lightmapOff : null
+  //     , transform : null },
+  // });
+  drawer.drawMat();
 
   if (mouse.object != 0) {
     var ent = Entity.get(mouse.object);
