@@ -31,6 +31,10 @@ computed using rasterization. That is what this example does.
   <script src="lib/utils.js" type="text/javascript"></script>
 
   <script src="materials/wireframe.js" type="text/javascript"></script>
+  <script src="materials/lambert.js" type="text/javascript"></script>
+  <script src="materials/select.js" type="text/javascript"></script>
+  <script src="materials/depth.js" type="text/javascript"></script>
+  <script src="materials/shadow_test.js" type="text/javascript"></script>
 
   <script>
 
@@ -45,11 +49,6 @@ if (!gl.getExtension('OES_texture_float')) {
 
 var depthMap = new GL.Texture(1024, 1024, { format: gl.RED });
 var drawer = new Scene.Drawer();
-drawer.loadShader('depth');
-drawer.loadShader('shadow_test');
-drawer.loadShader('select');
-drawer.loadShader('tex_map');
-drawer.loadShader('ui');
 
 var texMech = new GL.Mesh({coords: true });
 
@@ -67,14 +66,19 @@ texMech.triangles.push([0, 2, 1]);
 texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
+
+
 var wmat = Materials.get('wireframe');
-wmat.init();
 wmat.setColor(1, 0, 0, 1);
 
-var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(wmat);
-var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(wmat);
-var ogre = new Entity.Model('models/Ogre.obj').setScale(1).setMaterial(wmat);
-var tile = new Entity.Model('models/tile.obj').setScale(10.0).setMaterial(wmat);
+var lambMat = Materials.get('lambert');
+var depthMat = Materials.get('depth');
+var shadowMat = Materials.get('shadow_test');
+
+var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(lambMat);
+var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(lambMat);
+var ogre = new Entity.Model('models/Ogre.obj').setScale(1).setMaterial(lambMat);
+var tile = new Entity.Model('models/tile.obj').setScale(10.0).setMaterial(lambMat);
 
 drawer.add(plane);
 drawer.add(head);
@@ -112,9 +116,7 @@ function renderLightmap(dir) {
   depthMap.drawTo(function() {
     gl.clearColor(1, 1, 1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    drawer.draw("depth", {
-      per : {transform : null}
-    });
+    drawer.drawMatOverride(depthMat);
   });
 
   // Reset the transform
@@ -130,18 +132,9 @@ function renderLightmap(dir) {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    drawer.draw('shadow_test',{
-      pre : {
-        shadowMapMatrix : shadowMapMatrix,
-        sampleCount     : sampleCount++,
-        light           : dir,
-        lightmapMult    : lightmapper.delta,
-      }, 
-      per : {
-        lightmapOff     : null,
-        transform       : null,
-      },
-    });
+    shadowMat.incSample();
+    shadowMat.setLight(shadowMapMatrix, dir);
+    drawer.drawMatOverride(shadowMat);
 
     gl.disable(gl.BLEND);
   });
@@ -215,6 +208,10 @@ gl.onupdate = function(seconds) {
   var right = GL.keys.D | GL.keys.RIGHT;
   var sideways = GL.Vector.fromAngles(-cam.angleY * Math.PI / 180, 0);
   cam.pos = cam.pos.add(sideways.multiply(speed * (right - left)));
+
+  var tracer = new GL.Raytracer();
+  var forward = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);
+  lambMat.setLight(forward.negative());
 };
 
 gl.canvas.onmousewheel = function(e) {
@@ -226,7 +223,7 @@ gl.canvas.onclick = function(e) {
 
 var flip = false;
 var r = 0.1;
-var light = new GL.Vector(1, 1, 1);
+var selMat = Materials.get('select');
 
 gl.ondraw = function() {
   
@@ -235,47 +232,25 @@ gl.ondraw = function() {
 
   gl.clearColor(0, 0, 0, 0),
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  drawer.draw('select', {
-    per : 
-      { id : null
-      , transform : null },
-  });
+  drawer.drawMatOverride(selMat);
   pick();
 
 
   gl.clearColor(0.359, 0.398, 0.449, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // if (sampleCount < 256) {
-    var dir = GL.Vector.randomDirection();
-    //flip = !flip;
-    if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-    renderLightmap(dir.y < 0 ? dir.negative() : dir);
-  // }
+  var dir = GL.Vector.randomDirection();
+  //flip = !flip;
+  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
+  renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
   // Draw the mesh with the ambient occlusion so far
   lightmapper.texture.bind();
 
-  // drawer.draw('tex_map', {
-  //   pre : {lightmapMult : lightmapper.delta}, 
-  //   per : 
-  //     { lightmapOff : null
-  //     , transform : null },
-  // });
   drawer.drawMat();
 
   if (mouse.object != 0) {
-    var ent = Entity.get(mouse.object);
-    if (ent.mesh.lines == undefined) {
-      ent.mesh.computeWireframe();
-    }
-
-    drawer.drawID(mouse.object, 'tex_map', {
-      pre : {wireframe : 1.0},
-      post : {wireframe : 0.0},
-      per : {transform : null},
-      mode : gl.LINES,
-    });
+    drawer.drawMatOverrideID(wmat, mouse.object);
   }
 
   // textureMapShader.uniforms({lightmapMult : 1.0});

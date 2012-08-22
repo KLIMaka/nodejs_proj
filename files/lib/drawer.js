@@ -123,6 +123,11 @@ Scene.Drawer.prototype = {
 		}
 	},
 
+	drawMatOverrideID : function(mat, id) {
+		mat.begin();
+		mat.draw(this.ents[id]);
+	},
+
 	drawID : function(id, shaderName, options) {
 		
 		var shader = this.shaders[shaderName];

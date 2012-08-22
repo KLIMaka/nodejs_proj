@@ -2,10 +2,10 @@
 var mat = new Materials.Material('wireframe');
 
 mat.init = function() {
-	mat.shader = Shaders.get('wireframe');
-	mat.pre = {color : [1.0, 1.0, 1.0, 1.0]};
-	mat.per = {transform : null};
-	mat.mode = gl.LINES;
+	this.shader = Shaders.get('wireframe');
+	this.pre = {color : [1.0, 1.0, 1.0, 1.0]};
+	this.per = {transform : null};
+	this.mode = gl.LINES;
 }
 
 mat.onBind = function(obj) {

@@ -39,15 +39,21 @@ var Materials = {
 
 	Material : function(name) {
 
-		this.mode = 0;
-		this.shader = null;
 		this.name = name;
 		this.id = Materials.lastID++;
+		this.mode = 0;
+		this.shader = null;
+		this.inited = false;
+		
 		Materials.list[name] = this;
 	},
 
 	get : function(name) {
-		return Materials.list[name];
+		
+		var mat = Materials.list[name];
+		if (mat && !mat.inited)
+			mat.init();
+		return mat;
 	}
 }
 
