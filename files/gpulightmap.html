@@ -24,10 +24,10 @@ computed using rasterization. That is what this example does.
   <script src="lightgl/texture.js" type="text/javascript"></script>
   <script src="lightgl/main.js" type="text/javascript"></script>
 
-  <script src="cache.js" type="text/javascript"></script>
-  <script src="entity.js" type="text/javascript"></script>
-  <script src="drawer.js" type="text/javascript"></script>
-  <script src="utils.js" type="text/javascript"></script>
+  <script src="lib/cache.js" type="text/javascript"></script>
+  <script src="lib/entity.js" type="text/javascript"></script>
+  <script src="lib/drawer.js" type="text/javascript"></script>
+  <script src="lib/utils.js" type="text/javascript"></script>
   <script>
 
 var gl = GL.create({
@@ -64,30 +64,18 @@ texMech.triangles.push([0, 3, 2]);
 
 texMech.compile();
 
-// var cube = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0.3, 0);
-// var cube1 = new Entity.Model('cube.obj').setScale(0.3).setPos(0.3, 0, 0);
-// var cube2 = new Entity.Model('cube.obj').setScale(0.3).setPos(0, 0, 0.3);
-// var plane1 = new Entity.Model('plane.obj').setPos(10, 0, 10);
-var plane = new Entity.Model('plane.obj').setScale(10);
-var head = new Entity.Model('head.obj').setScale(0.03);
-var ogre = new Entity.Model('Ogre.obj').setScale(1);
-var tile = new Entity.Model('tile.obj').setScale(10.0);
+var plane = new Entity.Model('models/plane.obj').setScale(10);
+var head = new Entity.Model('models/head.obj').setScale(0.03);
+var ogre = new Entity.Model('models/Ogre.obj').setScale(1);
+var tile = new Entity.Model('models/tile.obj').setScale(10.0);
 
 drawer.add(plane);
-// drawer.add(cube);
-// drawer.add(cube1);
-// drawer.add(cube2);
-// drawer.add(plane1);
 drawer.add(head);
 drawer.add(ogre);
 drawer.add(tile);
 
-var lightmapper = new lightAtlas(1024, 2);
+var lightmapper = new lightAtlas(512, 2);
 lightmapper.allocate(plane);
-// lightmapper.allocate(cube);
-// lightmapper.allocate(cube1);
-// lightmapper.allocate(cube2);
-// lightmapper.allocate(plane1);
 lightmapper.allocate(head);
 lightmapper.allocate(ogre);
 lightmapper.allocate(tile);

@@ -94,8 +94,10 @@ var processor = {
 
 		'glsl' : function(file, name) {
 			var cont = fs.readFileSync('files/'+file, 'UTF-8');
-      var res = cont.split(/\r?\n/).join('\\\n');
-			return 'var ' + name + ' = "' + res + '";';
+      var parts = cont.split(/###\r?\n/);
+      var vsh = parts[0].split(/\r?\n/).join('\\\n');
+      var fsh = parts[1].split(/\r?\n/).join('\\\n');
+			return 'var ' + name + ' = {vsh : "' + vsh + '",'+' fsh : "' + fsh + '"};';
 		},
 
     'json' : function(file, name) {

@@ -9,9 +9,7 @@ var Scene = {
 			         || (Scene.defaultGLShader = new GL.Shader('void main(){gl_Position = vec4(0,0,0,0);}', 'void main(){gl_FragColor = vec4(0,0,0,0);}'));
 
 	    var self = this;
-		var v = null, f = null;
-		Cache.load('shaders/'+shader+'_v.glsl', function(d){v = d; if (f) self.load(v,f);});
-		Cache.load('shaders/'+shader+'_f.glsl', function(d){f = d; if (v) self.load(v,f);});
+		Cache.load('shaders/'+shader+'.glsl', function(d){self.load(d.vsh, d.fsh);});
 	},
 
 	Drawer : function() {
