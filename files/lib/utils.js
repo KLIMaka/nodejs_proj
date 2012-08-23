@@ -206,4 +206,33 @@ function extend(gl) {
 		gl.matrixMode(gl.MODELVIEW);
 		gl.popMatrix();
 	};
+
+	gl.BLEND_NONE = 0
+	gl.BLEND_MULT = 1;
+	gl.BLEND_ADD  = 2;
+	gl.BLEND_ALPHA = 3;
+
+	gl.setBlend = function(mode) {
+
+		switch(mode) {
+			case gl.BLEND_NONE:
+				gl.disable(gl.BLEND);
+				break;
+
+			case gl.BLEND_ADD:
+				gl.enable(gl.BLEND);
+				gl.blendFunc(gl.ONE, gl.ONE);
+				break;
+
+			case gl.BLEND_MULT:
+				gl.enable(gl.BLEND);
+				gl.blendFunc(gl.DST_COLOR, gl.ZERO);
+				break;
+
+			case gl.BLEND_ALPHA:
+				gl.enable(gl.BLEND);
+				gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+				break;
+		}
+	}
 }

@@ -81,4 +81,15 @@ Materials.Material.prototype = {
 
 		shader.draw(obj.mesh, this.mode);
 	},
+
+	drawBuffers : function(obj, vertexBuffers, indexBuffer) {
+		var shader = this.shader.glShader;
+		var per = this.per;
+		if (per) {
+			for(i in per) per[i] = obj.uniforms[i];
+			shader.uniforms(per); 
+		}
+
+		shader.drawBuffers(vertexBuffers, indexBuffer, this.mode, obj.idx, obj.len);
+	}
 }

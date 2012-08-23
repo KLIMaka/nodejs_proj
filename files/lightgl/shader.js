@@ -204,7 +204,7 @@ Shader.prototype = {
   // object of type `gl.ELEMENT_ARRAY_BUFFER`, and `mode` is a WebGL primitive mode
   // like `gl.TRIANGLES` or `gl.LINES`. This method automatically creates and caches
   // vertex attribute pointers for attributes as needed.
-  drawBuffers: function(vertexBuffers, indexBuffer, mode) {
+  drawBuffers: function(vertexBuffers, indexBuffer, mode, offset, len) {
     // Only construct up the built-in matrices we need for this shader.
     var used = this.usedMatrices;
     var MVM = gl.modelviewMatrix;
@@ -250,7 +250,9 @@ Shader.prototype = {
     if (length && (!indexBuffer || indexBuffer.buffer)) {
       if (indexBuffer) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer.buffer);
-        gl.drawElements(mode, indexBuffer.buffer.length, gl.UNSIGNED_SHORT, 0);
+        offset = offset || 0;
+        len = len || indexBuffer.buffer.length;
+        gl.drawElements(mode, len, gl.UNSIGNED_SHORT, offset);
       } else {
         gl.drawArrays(mode, 0, length);
       }

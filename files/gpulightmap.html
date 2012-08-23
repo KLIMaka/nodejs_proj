@@ -1,72 +1,48 @@
-<!--
-
-This example dynamically generates an ambient occlusion lightmap on the GPU.
-Ambient occlusion refers to the shadows due to a uniformly lit hemisphere
-enclosing the model, which approximates the light arriving from the sky.
-Let this example run for a while for a perfectly smooth lightmap.
-
-Usually ambient occlusion is calculated for a given point in the scene by
-tracing rays outward in random directions from that point and making the point
-lighter if those rays don't intersect anything. This is inefficient because
-each ray is independent and uncorrelated. It is much more efficient if all
-sample rays in a pass are parallel because the intersections can then be
-computed using rasterization. That is what this example does.
-
--->
 <!DOCTYPE html>
 <html><body>
 
-  <script src="lightgl/vector.js" type="text/javascript"></script>
-  <script src="lightgl/matrix.js" type="text/javascript"></script>
-  <script src="lightgl/mesh.js" type="text/javascript"></script>
-  <script src="lightgl/raytracer.js" type="text/javascript"></script>
-  <script src="lightgl/shader.js" type="text/javascript"></script>
-  <script src="lightgl/texture.js" type="text/javascript"></script>
-  <script src="lightgl/main.js" type="text/javascript"></script>
+<script src="lightgl/vector.js" type="text/javascript"></script>
+<script src="lightgl/matrix.js" type="text/javascript"></script>
+<script src="lightgl/mesh.js" type="text/javascript"></script>
+<script src="lightgl/raytracer.js" type="text/javascript"></script>
+<script src="lightgl/shader.js" type="text/javascript"></script>
+<script src="lightgl/texture.js" type="text/javascript"></script>
+<script src="lightgl/main.js" type="text/javascript"></script>
 
-  <script src="lib/cache.js" type="text/javascript"></script>
-  <script src="lib/entity.js" type="text/javascript"></script>
-  <script src="lib/drawer.js" type="text/javascript"></script>
-  <script src="lib/shaders.js" type="text/javascript"></script>
-  <script src="lib/utils.js" type="text/javascript"></script>
+<script src="lib/cache.js" type="text/javascript"></script>
+<script src="lib/entity.js" type="text/javascript"></script>
+<script src="lib/drawer.js" type="text/javascript"></script>
+<script src="lib/shaders.js" type="text/javascript"></script>
+<script src="lib/ui.js" type="text/javascript"></script>
+<script src="lib/utils.js" type="text/javascript"></script>
 
-  <script src="materials/wireframe.js" type="text/javascript"></script>
-  <script src="materials/lambert.js" type="text/javascript"></script>
-  <script src="materials/select.js" type="text/javascript"></script>
-  <script src="materials/depth.js" type="text/javascript"></script>
-  <script src="materials/shadow_test.js" type="text/javascript"></script>
-  <script src="materials/tex_map.js" type="text/javascript"></script>
+<script src="materials/wireframe.js" type="text/javascript"></script>
+<script src="materials/lambert.js" type="text/javascript"></script>
+<script src="materials/select.js" type="text/javascript"></script>
+<script src="materials/depth.js" type="text/javascript"></script>
+<script src="materials/shadow_test.js" type="text/javascript"></script>
+<script src="materials/tex_map.js" type="text/javascript"></script>
+<script src="materials/ui.js" type="text/javascript"></script>
 
-  <script>
+<script>
 
 var gl = GL.create({
-  antialias: true,
+    antialias: true,
 });
 extend(gl);
 if (!gl.getExtension('OES_texture_float')) {
-  document.write('This demo requires the OES_texture_float extension to run');
-  throw 'not supported';
+    document.write('This demo requires the OES_texture_float extension to run');
+    throw 'not supported';
 }
 
 var depthMap = new GL.Texture(1024, 1024, { format: gl.RED });
 var drawer = new Scene.Drawer();
+var ui = new UI.PanelDrawer();
 
-var texMech = new GL.Mesh({coords: true });
+var uiMat = Materials.get('ui');
+var pan1 = ui.createPanel(UI.Panel);
+pan1.setMaterial(uiMat).setSize(200, 200);
 
-texMech.vertices.push([0.0, 0.0, 0.0]);
-texMech.vertices.push([300.0, 0.0, 0.0]);
-texMech.vertices.push([300.0, 300.0, 0.0]);
-texMech.vertices.push([0.0, 300.0, 0.0]);
-
-texMech.coords.push([0.0, 0.0]);
-texMech.coords.push([0.0, 1.0]);
-texMech.coords.push([1.0, 1.0]);
-texMech.coords.push([1.0, 0.0]);
-
-texMech.triangles.push([0, 2, 1]);
-texMech.triangles.push([0, 3, 2]);
-
-texMech.compile();
 
 
 var wmat = Materials.get('wireframe');
@@ -93,129 +69,124 @@ lightmapper.allocate(tile);
 
 lmMat.connect(lightmapper);
 shadowMat.connect(lightmapper);
+uiMat.setTexture(lightmapper.texture);
 
 var exp_size = 4;
 function renderLightmap(dir) {
 
-  // Construct a camera looking from the light toward the object
-  var r = 5.0*exp_size, c = new GL.Vector(0, 0, 0);
-  gl.matrixMode(gl.PROJECTION);
-  gl.pushMatrix();
-  gl.loadIdentity();
-  gl.ortho(-r, r, -r, r, -r, r);
-  gl.matrixMode(gl.MODELVIEW);
-  gl.pushMatrix();
-  gl.loadIdentity();
+    // Construct a camera looking from the light toward the object
+    var r = 5.0*exp_size, c = new GL.Vector(0, 0, 0);
+    gl.matrixMode(gl.PROJECTION);
+    gl.pushMatrix();
+    gl.loadIdentity();
+    gl.ortho(-r, r, -r, r, -r, r);
+    gl.matrixMode(gl.MODELVIEW);
+    gl.pushMatrix();
+    gl.loadIdentity();
 
-  var at = c.subtract(dir);
-  var useY = (dir.max() != dir.y);
-  var up = new GL.Vector(!useY, useY, 0).cross(dir);
-  gl.lookAt(c.x, c.y, c.z, at.x, at.y, at.z, up.x, up.y, up.z);
+    var at = c.subtract(dir);
+    var useY = (dir.max() != dir.y);
+    var up = new GL.Vector(!useY, useY, 0).cross(dir);
+    gl.lookAt(c.x, c.y, c.z, at.x, at.y, at.z, up.x, up.y, up.z);
 
-  // Render the object viewed from the light using a shader that returns the fragment depth
-  var shadowMapMatrix = gl.projectionMatrix.multiply(gl.modelviewMatrix);
-  depthMap.drawTo(function() {
-    gl.clearColor(1, 1, 1, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    drawer.drawMatOverride(depthMat);
-  });
+    // Render the object viewed from the light using a shader that returns the fragment depth
+    var shadowMapMatrix = gl.projectionMatrix.multiply(gl.modelviewMatrix);
+    depthMap.drawTo(function() {
+        gl.clearColor(1, 1, 1, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        drawer.drawMatOverride(depthMat);
+    });
 
-  // Reset the transform
-  gl.matrixMode(gl.PROJECTION);
-  gl.popMatrix();
-  gl.matrixMode(gl.MODELVIEW);
-  gl.popMatrix();
+    // Reset the transform
+    gl.matrixMode(gl.PROJECTION);
+    gl.popMatrix();
+    gl.matrixMode(gl.MODELVIEW);
+    gl.popMatrix();
 
-  // Run the shadow test for each texel in the lightmap and
-  // accumulate that onto the existing lightmap contents
-  depthMap.bind();
-  lightmapper.texture.drawTo(function() {
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // Run the shadow test for each texel in the lightmap and
+    // accumulate that onto the existing lightmap contents
+    depthMap.bind();
+    lightmapper.texture.drawTo(function() {
+        gl.setBlend(gl.BLEND_ALPHA);
 
-    shadowMat.incSample();
-    shadowMat.setLight(shadowMapMatrix, dir);
-    drawer.drawMatOverride(shadowMat);
+        shadowMat.incSample();
+        shadowMat.setLight(shadowMapMatrix, dir);
+        drawer.drawMatOverride(shadowMat);
 
-    gl.disable(gl.BLEND);
-  });
-  depthMap.unbind();
+        gl.setBlend(gl.BLEND_NONE);
+    });
+    depthMap.unbind();
 }
-
-// var textureMapShader = new asyncShader('tex_map');
 
 var mouse = {
-  x : 0,
-  y : 0,
-  object : null,
-  free : true,
+    x : 0,
+    y : 0,
+    object : null,
+    free : true,
 }
-var drag_coef = 0.83;
-var drag_normal = new GL.Vector(0, 1, 0);
 var cam = new camera();
-cam.setZoom(4);
 
 var result;
 var originalOffset;
 
 gl.onmousedown = function(e) {
 
-  if (mouse.object != 0) {
-    var obj = Entity.get(mouse.object);
-    var tracer = new GL.Raytracer();
-    var ray = tracer.getRayForPixel(e.x, e.y);
-    result = GL.Raytracer.hitTestMesh(tracer.eye, ray, obj);
-    result.normal = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);//drag_normal;
-    originalOffset = obj.position.clone();
-  }
+    if (mouse.object != 0) {
+        var obj = Entity.get(mouse.object);
+        var tracer = new GL.Raytracer();
+        var ray = tracer.getRayForPixel(e.x, e.y);
+        result = GL.Raytracer.hitTestMesh(tracer.eye, ray, obj);
+        result.normal = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);
+        originalOffset = obj.position.clone();
+    }
 }
 
 gl.onmousemove = function(e) {
 
-  if (e.dragging) {
-    mouse.free = false;
-    if (mouse.object != 0) {
+    if (e.dragging) {
+        mouse.free = false;
+        if (mouse.object != 0) {
 
-      var obj = Entity.get(mouse.object);
-      var tracer = new GL.Raytracer();
-      var ray = tracer.getRayForPixel(e.x, e.y);
-      var t = result.hit.subtract(tracer.eye).dot(result.normal) / ray.dot(result.normal);
-      var hit = tracer.eye.add(ray.multiply(t));
-      var offset = originalOffset.add(hit.subtract(result.hit));
-      obj.setPos(offset.x, offset.y, offset.z);
+            var obj = Entity.get(mouse.object);
+            var tracer = new GL.Raytracer();
+            var ray = tracer.getRayForPixel(e.x, e.y);
+            var t = result.hit.subtract(tracer.eye).dot(result.normal) / ray.dot(result.normal);
+            var hit = tracer.eye.add(ray.multiply(t));
+            var offset = originalOffset.add(hit.subtract(result.hit));
+            obj.setPos(offset.x, offset.y, offset.z);
 
-    } else { 
-      cam.updateAngles(e.deltaX, e.deltaY);
+        } else { 
+            cam.updateAngles(e.deltaX, e.deltaY);
+        }
+    } else {
+        mouse.free = true;
     }
-  } else {
-    mouse.free = true;
-  }
-  mouse.x = e.x;
-  mouse.y = e.y;
+    mouse.x = e.x;
+    mouse.y = e.y;
 };
 
 gl.onupdate = function(seconds) {
-  var speed = seconds * 4;
+    var speed = seconds * 4;
 
-  // Forward movement
-  var up = GL.keys.W | GL.keys.UP;
-  var down = GL.keys.S | GL.keys.DOWN;
-  var forward = GL.Vector.fromAngles((90 - cam.angleY) * Math.PI / 180, (180 - cam.angleX) * Math.PI / 180);
-  cam.pos = cam.pos.add(forward.multiply(speed * (up - down)));
+    // Forward movement
+    var up = GL.keys.W | GL.keys.UP;
+    var down = GL.keys.S | GL.keys.DOWN;
+    var forward = GL.Vector.fromAngles((90 - cam.angleY) * Math.PI / 180, (180 - cam.angleX) * Math.PI / 180);
+    cam.pos = cam.pos.add(forward.multiply(speed * (up - down)));
 
-  // Sideways movement
-  var left = GL.keys.A | GL.keys.LEFT;
-  var right = GL.keys.D | GL.keys.RIGHT;
-  var sideways = GL.Vector.fromAngles(-cam.angleY * Math.PI / 180, 0);
-  cam.pos = cam.pos.add(sideways.multiply(speed * (right - left)));
+    // Sideways movement
+    var left = GL.keys.A | GL.keys.LEFT;
+    var right = GL.keys.D | GL.keys.RIGHT;
+    var sideways = GL.Vector.fromAngles(-cam.angleY * Math.PI / 180, 0);
+    cam.pos = cam.pos.add(sideways.multiply(speed * (right - left)));
 
-  var tracer = new GL.Raytracer();
-  var forward = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);
-  lambMat.setLight(forward.negative());
+    var tracer = new GL.Raytracer();
+    var forward = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);
+    lambMat.setLight(forward.negative());
 };
 
 gl.canvas.onmousewheel = function(e) {
-  cam.updateZoom(e.wheelDelta / -240);
+    cam.updateZoom(e.wheelDelta / -240);
 }
 
 gl.canvas.onclick = function(e) {
@@ -226,37 +197,39 @@ var r = 0.1;
 var selMat = Materials.get('select');
 
 gl.ondraw = function() {
-  
-  gl.loadIdentity();
-  cam.applyTransform();
+    
+    gl.loadIdentity();
+    cam.applyTransform();
 
-  gl.clearColor(0, 0, 0, 0),
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  drawer.drawMatOverride(selMat);
-  pick();
+    gl.clearColor(0, 0, 0, 0),
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    drawer.drawMatOverride(selMat);
+    pick();
 
 
-  gl.clearColor(0.359, 0.398, 0.449, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(0.359, 0.398, 0.449, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  var dir = GL.Vector.randomDirection();
-  flip = !flip;
-  if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
-  renderLightmap(dir.y < 0 ? dir.negative() : dir);
+    var dir = GL.Vector.randomDirection();
+    flip = !flip;
+    if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
+    renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
-  // Draw the mesh with the ambient occlusion so far
-  //drawer.drawMatOverride(lmMat);
-  drawer.drawMat();
 
-  if (mouse.object != 0) {
-    drawer.drawMatOverrideID(wmat, mouse.object);
-  }
+    drawer.drawMatOverride(lmMat);
+    //drawer.drawMat();
 
-  // textureMapShader.uniforms({lightmapMult : 1.0});
-  // //depthMap.bind();
-  // gl.begin2D();
-  // uiShader.draw(texMech);
-  // gl.end2D();
+    // gl.setBlend(gl.BLEND_MUL);
+    // drawer.drawMatOverride(wmat);
+    // gl.setBlend(gl.BLEND_NONE);
+
+    if (mouse.object != 0) {
+        drawer.drawMatOverrideID(wmat, mouse.object);
+    }
+
+    gl.begin2D();
+    ui.draw(pan1);
+    gl.end2D();
 };
 
 gl.fullscreen();
