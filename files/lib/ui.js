@@ -5,12 +5,13 @@ var UI = {
 
 		this.mesh = new GL.Mesh({coords:true});
 		this.lastIndex = 0;
+		this.panels = {};
 	},
 
-	Panel : function(idx) {
+	Panel : function(builder) {
 
 		this.id = Entity.genID();
-		this.idx = idx;
+		this.idx = builder.addQuad();
 		this.len = 6;
 		
 		this.uniforms = {
@@ -47,7 +48,7 @@ UI.PanelDrawer.prototype = {
 	}, 
 
 	createPanel : function(constructor) {
-		return new constructor(this.addQuad());
+		return new constructor(this);
 	},
 
 	draw : function(panel) {

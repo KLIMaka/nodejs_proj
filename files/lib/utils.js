@@ -37,7 +37,7 @@ function lightAtlas(size, rows) {
 
 	this.size = size;
 	this.rows = rows;
-	this.texture = new GL.Texture(size, size, { format: gl.RED, type: gl.FLOAT });
+	this.texture = new GL.Texture(size, size, { format: gl.LUMINACE_ALPHA, type: gl.FLOAT });
 	this.curCell = 0;
 	this.delta = 1.0 / rows;
 }
@@ -194,7 +194,7 @@ function extend(gl) {
 		gl.matrixMode(gl.PROJECTION);
 		gl.pushMatrix();
 		gl.loadIdentity();
-		gl.ortho(0, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, -1.0, 1.0);
+		gl.ortho(0, gl.drawingBufferWidth, gl.drawingBufferHeight, 0, 10000.0, -10000.0);
 		gl.matrixMode(gl.MODELVIEW);
 		gl.pushMatrix();
 		gl.loadIdentity();

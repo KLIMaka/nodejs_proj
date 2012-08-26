@@ -28,6 +28,7 @@
 
 var gl = GL.create({
     antialias: true,
+    preserveDrawingBuffer  : true,
 });
 extend(gl);
 if (!gl.getExtension('OES_texture_float')) {
@@ -35,14 +36,16 @@ if (!gl.getExtension('OES_texture_float')) {
     throw 'not supported';
 }
 
-var depthMap = new GL.Texture(1024, 1024, { format: gl.RED });
+var depthMap = new GL.Texture(1024, 1024, { format: gl.LUMINACE_ALPHA });
 var drawer = new Scene.Drawer();
 var ui = new UI.PanelDrawer();
 
 var uiMat = Materials.get('ui');
-var pan1 = ui.createPanel(UI.Panel);
-pan1.setMaterial(uiMat).setSize(200, 200);
+var pan1 = ui.createPanel(UI.Panel)
+             .setMaterial(uiMat)
+             .setSize(200, 200);
 
+var cube = new Entity.Model('models/Ogre.obj').setScale(100.0).setPos(400, 400, 0);
 
 
 var wmat = Materials.get('wireframe');
@@ -51,18 +54,25 @@ var depthMat = Materials.get('depth');
 var shadowMat = Materials.get('shadow_test');
 var lmMat = Materials.get('tex_map');
 
-var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(lambMat);
+cube.setMaterial(lambMat);
+
+var wBuilder = new Entity.WireBuilder();
+var grid = wBuilder.buildGrid(10).setMaterial(wmat);
+
+//var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(lambMat);
 var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(lambMat);
 var ogre = new Entity.Model('models/Ogre.obj').setScale(1).setMaterial(lambMat);
 var tile = new Entity.Model('models/tile.obj').setScale(10.0).setMaterial(lambMat);
 
-drawer.add(plane);
+var selectCube = new Entity.Model('models/cube.obj').setMaterial(wmat);
+
+//drawer.add(plane);
 drawer.add(head);
 drawer.add(ogre);
 drawer.add(tile);
 
 var lightmapper = new lightAtlas(512, 2);
-lightmapper.allocate(plane);
+//lightmapper.allocate(plane);
 lightmapper.allocate(head);
 lightmapper.allocate(ogre);
 lightmapper.allocate(tile);
@@ -75,7 +85,7 @@ var exp_size = 4;
 function renderLightmap(dir) {
 
     // Construct a camera looking from the light toward the object
-    var r = 5.0*exp_size, c = new GL.Vector(0, 0, 0);
+    var r = 2.0*exp_size, c = new GL.Vector(0, 0, 0);
     gl.matrixMode(gl.PROJECTION);
     gl.pushMatrix();
     gl.loadIdentity();
@@ -157,6 +167,7 @@ gl.onmousemove = function(e) {
 
         } else { 
             cam.updateAngles(e.deltaX, e.deltaY);
+            cube.setAngles(-cam.angleX + 180, -cam.angleY);
         }
     } else {
         mouse.free = true;
@@ -215,6 +226,18 @@ gl.ondraw = function() {
     if (flip) dir = new GL.Vector(1, 1, 1).add(dir.multiply(r * Math.sqrt(Math.random()))).unit();
     renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
+    gl.depthFunc(gl.ALWAYS);
+    gl.depthMask(true);
+    wmat.setColor(0.3, 0.3, 0.3, 1);
+    grid.setScale(1);
+    grid.draw();
+    wmat.setColor(0.5, 0.5, 0.5, 1);
+    grid.setScale(5);
+    grid.draw();
+    wmat.setColor(0.1, 0.1, 0.1, 1);
+    grid.setScale(10);
+    grid.draw();
+    gl.depthFunc(gl.LESS);
 
     drawer.drawMatOverride(lmMat);
     //drawer.drawMat();
@@ -223,12 +246,20 @@ gl.ondraw = function() {
     // drawer.drawMatOverride(wmat);
     // gl.setBlend(gl.BLEND_NONE);
 
-    if (mouse.object != 0) {
-        drawer.drawMatOverrideID(wmat, mouse.object);
+    var ent = Entity.get(mouse.object);
+    if (ent) {
+        //drawer.drawMatOverrideID(wmat, mouse.object);
+        var bbox = ent.bbox();
+        selectCube.setPosVec(ent.position.add(bbox.position.multiply(ent.scale)));
+        selectCube.setScaleVec(bbox.scale.multiply(ent.scale));
+        selectCube.setAnglesVec(ent.angles);
+        selectCube.draw();
     }
 
     gl.begin2D();
     ui.draw(pan1);
+    lambMat.begin();
+    lambMat.draw(cube);
     gl.end2D();
 };
 

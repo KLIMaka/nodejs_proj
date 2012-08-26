@@ -73,6 +73,8 @@ Materials.Material.prototype = {
 
 	draw : function(obj) {
 		var shader = this.shader.glShader;
+		if (!shader) return;
+		
 		var per = this.per;
 		if (per) {
 			for(i in per) per[i] = obj.uniforms[i];
