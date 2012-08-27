@@ -57,7 +57,7 @@ var lmMat = Materials.get('tex_map');
 cube.setMaterial(lambMat);
 
 var wBuilder = new Entity.WireBuilder();
-var grid = wBuilder.buildGrid(10).setMaterial(wmat);
+var grid = wBuilder.buildGrid(-1, -1, 1, 1, 20).setMaterial(wmat);
 
 //var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(lambMat);
 var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(lambMat);
