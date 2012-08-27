@@ -45,7 +45,7 @@ var pan1 = ui.createPanel(UI.Panel)
              .setMaterial(uiMat)
              .setSize(200, 200);
 
-var cube = new Entity.Model('models/Ogre.obj').setScale(100.0).setPos(400, 400, 0);
+var cube = new Entity.Model('models/pivot.obj').setScale(400.0).setPos(400, 400, 0);
 
 
 var wmat = Materials.get('wireframe');
@@ -239,8 +239,8 @@ gl.ondraw = function() {
     grid.draw();
     gl.depthFunc(gl.LESS);
 
-    drawer.drawMatOverride(lmMat);
-    //drawer.drawMat();
+    //drawer.drawMatOverride(lmMat);
+    drawer.drawMat();
 
     // gl.setBlend(gl.BLEND_MUL);
     // drawer.drawMatOverride(wmat);
