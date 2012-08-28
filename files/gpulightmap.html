@@ -45,7 +45,7 @@ var pan1 = ui.createPanel(UI.Panel)
              .setMaterial(uiMat)
              .setSize(200, 200);
 
-var cube = new Entity.Model('models/pivot.obj').setScale(400.0).setPos(400, 400, 0);
+var cube = new Entity.Model('models/pivot.obj').setScale(1).setPos(400, 400, 0);
 
 
 var wmat = Materials.get('wireframe');
@@ -163,11 +163,11 @@ gl.onmousemove = function(e) {
             var t = result.hit.subtract(tracer.eye).dot(result.normal) / ray.dot(result.normal);
             var hit = tracer.eye.add(ray.multiply(t));
             var offset = originalOffset.add(hit.subtract(result.hit));
-            obj.setPos(offset.x, offset.y, offset.z);
+            obj.setPos(Math.round(offset.x), Math.round(offset.y), Math.round(offset.z));
 
         } else { 
             cam.updateAngles(e.deltaX, e.deltaY);
-            cube.setAngles(-cam.angleX + 180, -cam.angleY);
+            //cube.setAngles(-cam.angleX + 180, -cam.angleY);
         }
     } else {
         mouse.free = true;
@@ -206,6 +206,7 @@ gl.canvas.onclick = function(e) {
 var flip = false;
 var r = 0.1;
 var selMat = Materials.get('select');
+var factor = 0.4;
 
 gl.ondraw = function() {
     
@@ -242,6 +243,15 @@ gl.ondraw = function() {
     //drawer.drawMatOverride(lmMat);
     drawer.drawMat();
 
+    gl.disable(gl.DEPTH_TEST);
+    var scale = ogre.position.subtract(cam.pos).length();
+    cube.setPosVec(ogre.position);
+    cube.setScale(scale * factor);
+    lambMat.begin();
+    lambMat.draw(cube);
+    gl.enable(gl.DEPTH_TEST);
+
+
     // gl.setBlend(gl.BLEND_MUL);
     // drawer.drawMatOverride(wmat);
     // gl.setBlend(gl.BLEND_NONE);
@@ -258,8 +268,6 @@ gl.ondraw = function() {
 
     gl.begin2D();
     ui.draw(pan1);
-    lambMat.begin();
-    lambMat.draw(cube);
     gl.end2D();
 };
 
