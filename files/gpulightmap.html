@@ -61,7 +61,7 @@ var grid = wBuilder.buildGrid(-1, -1, 1, 1, 20).setMaterial(wmat);
 
 //var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(lambMat);
 var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(lambMat);
-var ogre = new Entity.Model('models/Ogre.obj').setScale(1).setMaterial(lambMat);
+var ogre = new Entity.Model('models/boat.obj').setScale(1).setMaterial(lambMat);
 var tile = new Entity.Model('models/tile.obj').setScale(10.0).setMaterial(lambMat);
 
 var selectCube = new Entity.Model('models/cube.obj').setMaterial(wmat);
@@ -243,13 +243,13 @@ gl.ondraw = function() {
     //drawer.drawMatOverride(lmMat);
     drawer.drawMat();
 
-    gl.disable(gl.DEPTH_TEST);
-    var scale = ogre.position.subtract(cam.pos).length();
-    cube.setPosVec(ogre.position);
-    cube.setScale(scale * factor);
-    lambMat.begin();
-    lambMat.draw(cube);
-    gl.enable(gl.DEPTH_TEST);
+    // gl.disable(gl.DEPTH_TEST);
+    // var scale = ogre.position.subtract(cam.pos).length();
+    // cube.setPosVec(ogre.position);
+    // cube.setScale(scale * factor);
+    // lambMat.begin();
+    // lambMat.draw(cube);
+    // gl.enable(gl.DEPTH_TEST);
 
 
     // gl.setBlend(gl.BLEND_MUL);
