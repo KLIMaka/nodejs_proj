@@ -28,9 +28,9 @@
 
 var gl = GL.create({
     antialias: true,
-    preserveDrawingBuffer  : true,
 });
 extend(gl);
+
 if (!gl.getExtension('OES_texture_float')) {
     document.write('This demo requires the OES_texture_float extension to run');
     throw 'not supported';
@@ -47,6 +47,37 @@ var pan1 = ui.createPanel(UI.Panel)
 
 var cube = new Entity.Model('models/pivot.obj').setScale(1).setPos(400, 400, 0);
 
+var xHandle = new Entity.Model('models/cube.obj').setScale(0.1);
+var yHandle = new Entity.Model('models/cube.obj').setScale(0.1);
+var zHandle = new Entity.Model('models/cube.obj').setScale(0.1);
+xHandle.normVec = new GL.Vector(1, 0, 0);
+yHandle.normVec = new GL.Vector(0, 1, 0);
+zHandle.normVec = new GL.Vector(0, 0, 1);
+var handleEnt = null;
+
+function connectHandle(ent) {
+    
+    xHandle.setPosVec(ent.position.add(xHandle.normVec));
+    yHandle.setPosVec(ent.position.add(yHandle.normVec));
+    zHandle.setPosVec(ent.position.add(zHandle.normVec));
+    handleEnt = ent;
+}
+
+function drawHandle(shader) {
+
+    if (shader != undefined) {
+        shader.begin();
+        shader.draw(xHandle);
+        shader.draw(yHandle);
+        shader.draw(zHandle);
+    } else {
+        lambMat.begin();
+        lambMat.draw(xHandle);
+        lambMat.draw(yHandle);
+        lambMat.draw(zHandle);
+    }
+}
+
 
 var wmat = Materials.get('wireframe');
 var lambMat = Materials.get('lambert');
@@ -59,20 +90,17 @@ cube.setMaterial(lambMat);
 var wBuilder = new Entity.WireBuilder();
 var grid = wBuilder.buildGrid(-1, -1, 1, 1, 20).setMaterial(wmat);
 
-//var plane = new Entity.Model('models/plane.obj').setScale(10).setMaterial(lambMat);
-var head = new Entity.Model('models/head.obj').setScale(0.03).setMaterial(lambMat);
+var head = new Entity.Model('models/Head.obj').setScale(0.03).setMaterial(lambMat);
 var ogre = new Entity.Model('models/boat.obj').setScale(1).setMaterial(lambMat);
 var tile = new Entity.Model('models/tile.obj').setScale(10.0).setMaterial(lambMat);
 
 var selectCube = new Entity.Model('models/cube.obj').setMaterial(wmat);
 
-//drawer.add(plane);
 drawer.add(head);
 drawer.add(ogre);
 drawer.add(tile);
 
 var lightmapper = new lightAtlas(512, 2);
-//lightmapper.allocate(plane);
 lightmapper.allocate(head);
 lightmapper.allocate(ogre);
 lightmapper.allocate(tile);
@@ -141,13 +169,15 @@ var originalOffset;
 
 gl.onmousedown = function(e) {
 
-    if (mouse.object != 0) {
-        var obj = Entity.get(mouse.object);
+    var ent = Entity.get(mouse.object);
+    if (ent && ent.normVec != undefined) {
         var tracer = new GL.Raytracer();
         var ray = tracer.getRayForPixel(e.x, e.y);
-        result = GL.Raytracer.hitTestMesh(tracer.eye, ray, obj);
-        result.normal = tracer.getRayForPixel(gl.drawingBufferWidth/2, gl.drawingBufferHeight/2);
-        originalOffset = obj.position.clone();
+        result = GL.Raytracer.hitTestMesh(tracer.eye, ray, ent);
+        result.normal = ent.normVec;
+        originalOffset = ent.position.clone();
+    } else {
+        result = null;
     }
 }
 
@@ -155,7 +185,7 @@ gl.onmousemove = function(e) {
 
     if (e.dragging) {
         mouse.free = false;
-        if (mouse.object != 0) {
+        if (result) {
 
             var obj = Entity.get(mouse.object);
             var tracer = new GL.Raytracer();
@@ -163,11 +193,11 @@ gl.onmousemove = function(e) {
             var t = result.hit.subtract(tracer.eye).dot(result.normal) / ray.dot(result.normal);
             var hit = tracer.eye.add(ray.multiply(t));
             var offset = originalOffset.add(hit.subtract(result.hit));
-            obj.setPos(Math.round(offset.x), Math.round(offset.y), Math.round(offset.z));
+            handleEnt.setPosVec(GL.Vector.snap(offset.subtract(obj.normVec), 1));
+            connectHandle(handleEnt);
 
         } else { 
             cam.updateAngles(e.deltaX, e.deltaY);
-            //cube.setAngles(-cam.angleX + 180, -cam.angleY);
         }
     } else {
         mouse.free = true;
@@ -197,10 +227,14 @@ gl.onupdate = function(seconds) {
 };
 
 gl.canvas.onmousewheel = function(e) {
-    cam.updateZoom(e.wheelDelta / -240);
 }
 
 gl.canvas.onclick = function(e) {
+
+    var ent = Entity.get(mouse.object);
+    if (ent && ent.normVec == undefined) {
+        connectHandle(ent);
+    }
 }
 
 var flip = false;
@@ -216,6 +250,7 @@ gl.ondraw = function() {
     gl.clearColor(0, 0, 0, 0),
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     drawer.drawMatOverride(selMat);
+    drawHandle(selMat);
     pick();
 
 
@@ -242,23 +277,17 @@ gl.ondraw = function() {
 
     //drawer.drawMatOverride(lmMat);
     drawer.drawMat();
+    drawHandle();
 
     // gl.disable(gl.DEPTH_TEST);
     // var scale = ogre.position.subtract(cam.pos).length();
     // cube.setPosVec(ogre.position);
     // cube.setScale(scale * factor);
-    // lambMat.begin();
-    // lambMat.draw(cube);
+    // cube.draw();
     // gl.enable(gl.DEPTH_TEST);
-
-
-    // gl.setBlend(gl.BLEND_MUL);
-    // drawer.drawMatOverride(wmat);
-    // gl.setBlend(gl.BLEND_NONE);
 
     var ent = Entity.get(mouse.object);
     if (ent) {
-        //drawer.drawMatOverrideID(wmat, mouse.object);
         var bbox = ent.bbox();
         selectCube.setPosVec(ent.position.add(bbox.position.multiply(ent.scale)));
         selectCube.setScaleVec(bbox.scale.multiply(ent.scale));

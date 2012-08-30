@@ -1,38 +1,4 @@
 
-function asyncShader(shader) {
-
-	var s = {
-
-		shader : gl._tmpShader ||
-				 (gl._tmpShader = new GL.Shader('void main(){gl_Position = vec4(0,0,0,0);}', 'void main(){gl_FragColor = vec4(0,0,0,0);}')),
-
-		_load : function(v, f) {
-			this.shader = new GL.Shader(v, f);
-		},
-
-		uniforms : function(uniforms) {
-			this.shader.uniforms(uniforms);
-			return this;
-		},
-
-		draw : function(mesh, mode) {
-			this.shader.draw(mesh, arguments.length < 2 ? gl.TRIANGLES : mode);
-			return this;
-		},
-
-		drawBuffers : function(vertexBuffers, indexBuffer, mode) {
-			this.shader.drawBuffers(vertexBuffers, indexBuffer, mode);
-			return this;
-		},
-	};
-
-	var vl = undefined, fl = undefined;
-	Cache.load('shaders/'+shader+'_v.glsl', function(data){ vl = data; if (fl != undefined) s._load(vl, fl)});
-	Cache.load('shaders/'+shader+'_f.glsl', function(data){ fl = data; if (vl != undefined) s._load(vl, fl)});
-
-	return s;
-}
-
 function lightAtlas(size, rows) {
 
 	this.size = size;
@@ -53,68 +19,6 @@ lightAtlas.prototype = {
 	}
 }
 
-function drawer() {
-
-	this.objs = {};
-	this.bounds = { min: new GL.Vector(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE) };
-	this.bounds.max = this.bounds.min.negative();
-}
-
-drawer.prototype = {
-
-	draw : function(shader, uniforms, mode) {
-
-		mode = mode == undefined ? gl.TRIANGLES : mode;
-		for (i in this.objs) {
-			var obj = this.objs[i];
-
-			if (arguments.length == 2) {
-				var unis = {};
-				for (u in uniforms) 
-					unis[uniforms[u]] = obj.uniforms[uniforms[u]];
-				shader.uniforms(unis);
-			}
-			shader.draw(obj.mesh, mode);
-		}
-	},
-
-	drawID : function(id, shader, uniforms, mode) {
-		
-		var obj = this.objs[id];
-		if (obj == undefined) return;
-
-		mode = mode == undefined ? gl.TRIANGLES : mode;
-		if (uniforms != undefined)  {
-			var unis = {};
-			for (u in uniforms) 
-				unis[uniforms[u]] = obj.uniforms[uniforms[u]];
-			shader.uniforms(unis);
-		}
-
-		shader.draw(obj.mesh, mode);
-	},
-
-	add : function(obj) {
-		this.objs[obj.id] = obj;
-		this.recomputeBounds();
-	},
-
-	recomputeBounds : function() {
-
-		var mms = this.bounds;
-    	for (n in this.objs) {
-    		var bounds = this.objs[n].mesh.getAABB();
-    		mms.min = GL.Vector.min(bounds.min, mms.min);
-    		mms.max = GL.Vector.max(bounds.max, mms.max);
-    	}
-    	mms.center = mms.min.add(mms.max).divide(2);
-    	mms.radius = mms.min.add(mms.center).length();
-	},
-
-	get : function(id) {
-		return this.objs[id];
-	}
-}
 
 function camera() {
 
@@ -159,11 +63,16 @@ var pow8 = Math.pow(2,8);
 var pow16 = Math.pow(2,16);
 var pow24 = Math.pow(2,24);
 var pdata = new Uint8Array(4);
+var strobe = 0;
 
 function pick() {
-	gl.readPixels(mouse.x, gl.drawingBufferHeight-mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pdata);
-	if (mouse.free)
-		mouse.object = pdata[0] + pdata[1]*pow8 + pdata[2]*pow16;
+	strobe++;
+	if (strobe == 10) {
+		strobe = 0;
+		gl.readPixels(mouse.x, gl.drawingBufferHeight-mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pdata);
+		if (mouse.free)
+			mouse.object = pdata[0] + pdata[1]*pow8 + pdata[2]*pow16;
+	}
 }
 
 GL.Raytracer.hitTestMesh = function(origin, ray, obj) {
@@ -182,9 +91,22 @@ GL.Raytracer.hitTestMesh = function(origin, ray, obj) {
 
 		if (result != null && result.t < t) {
 			finalHit = result;
+			t = finalHit.t;
 		} 
 	}
 	return finalHit;
+}
+
+GL.Vector.snap = function(vec, step) {
+
+	if (step == 0) return vec;
+	
+	var rstep = 1 / step;
+	var x = Math.round(vec.x * rstep) * step;
+	var y = Math.round(vec.y * rstep) * step;
+	var z = Math.round(vec.z * rstep) * step;
+
+	return new GL.Vector(x, y, z);
 }
 
 function extend(gl) {
