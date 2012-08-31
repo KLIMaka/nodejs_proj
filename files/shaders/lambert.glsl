@@ -9,11 +9,12 @@ void main() {
 ###
 
 uniform vec3 light;
+uniform vec4 color;
 varying vec3 normal;
 
 void main() {
 
-	vec3 col = vec3(dot(light, normal));
-	col = (col + 1.0) / 4.0;
-	gl_FragColor = vec4(col, 1.0);
+	float col = dot(light, normal);
+	/*col = (col + 1.0) / 4.0;*/
+	gl_FragColor = color * col;
 }

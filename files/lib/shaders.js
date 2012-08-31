@@ -77,7 +77,7 @@ Materials.Material.prototype = {
 		
 		var per = this.per;
 		if (per) {
-			for(i in per) per[i] = obj.uniforms[i];
+			for(i in per) if (obj.uniforms[i]) per[i] = obj.uniforms[i]; else per[i] = this.default_per[i];
 			shader.uniforms(per); 
 		}
 

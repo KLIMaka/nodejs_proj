@@ -51,8 +51,11 @@ var xHandle = new Entity.Model('models/cube.obj').setScale(0.1);
 var yHandle = new Entity.Model('models/cube.obj').setScale(0.1);
 var zHandle = new Entity.Model('models/cube.obj').setScale(0.1);
 xHandle.normVec = new GL.Vector(1, 0, 0);
+xHandle.uniforms.color = [1, 0, 0, 1];
 yHandle.normVec = new GL.Vector(0, 1, 0);
+yHandle.uniforms.color = [0, 1, 0, 1];
 zHandle.normVec = new GL.Vector(0, 0, 1);
+zHandle.uniforms.color = [0, 0, 1, 1];
 var handleEnt = null;
 
 function connectHandle(ent) {
@@ -202,6 +205,7 @@ gl.onmousemove = function(e) {
     } else {
         mouse.free = true;
     }
+    
     mouse.x = e.x;
     mouse.y = e.y;
 };
@@ -263,19 +267,17 @@ gl.ondraw = function() {
     renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
     gl.depthFunc(gl.ALWAYS);
-    gl.depthMask(true);
-    wmat.setColor(0.3, 0.3, 0.3, 1);
-    grid.setScale(1);
-    grid.draw();
     wmat.setColor(0.5, 0.5, 0.5, 1);
-    grid.setScale(5);
-    grid.draw();
-    wmat.setColor(0.1, 0.1, 0.1, 1);
     grid.setScale(10);
     grid.draw();
     gl.depthFunc(gl.LESS);
 
     //drawer.drawMatOverride(lmMat);
+    wmat.setColor(1,1,0,1);
+    gl.depthMask(false);
+    drawer.drawMatOverride(wmat);
+    gl.depthMask(true);
+
     drawer.drawMat();
     drawHandle();
 
