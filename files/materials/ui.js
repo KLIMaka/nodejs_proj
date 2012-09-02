@@ -1,18 +1,21 @@
 
-var mat = new Materials.Material('ui');
+Materials.UI = function() {
 
-mat.init = function() {
+	if (!Materials.UI.prototype.shader) Materials.UI.prototype.shader = Shaders.get('ui');
+	if (!Materials.UI.prototype.per )   Materials.UI.prototype.per = {transform : null};
+	if (!Materials.UI.prototype.mode)   Materials.UI.prototype.mode = gl.TRIANGLES;
 
-	this.shader = Shaders.get('ui');
-	this.mode = gl.TRIANGLES;
-	this.per = {transform : null};
 	this.texture = null;
 }
 
-mat.onBegin = function() {
+Materials.UI.prototype = new Materials.Material();
+
+Materials.UI.prototype.onBegin = function() {
 	if (this.texture) this.texture.bind();
 }
 
-mat.setTexture = function(tex) {
+Materials.UI.prototype.setTexture = function(tex) {
 	this.texture = tex;
 }
+
+Materials.register('ui', Materials.UI);

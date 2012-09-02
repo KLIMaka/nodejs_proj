@@ -21,6 +21,15 @@ var Entity = {
 		return this.ents[id];
 	},
 
+	meshes : {},
+	getMesh : function(name) {
+
+		var mesh = Entity.meshes[name];
+		if (mesh == undefined)
+			return null;
+		return mesh;
+	},
+
 	Model : function(file) {
 
 		this.id        = Entity.genID();
@@ -79,9 +88,17 @@ Entity.WireBuilder.prototype = {
 Entity.Model.prototype = {
 
 	load : function(file) {
+
 		var self = this;
-		Cache.load(file, function(mesh){
-			self.mesh = GL.Mesh.load(mesh);
+		Cache.load(file, function(mesh_data){
+			var mesh = Entity.meshes[file];
+			if (mesh != null) {
+				self.mesh = mesh;
+				return;
+			}
+
+			self.mesh = GL.Mesh.load(mesh_data);
+			Entity.meshes[file] = self.mesh;
 			if (self.onMeshLoadedCallback) self.onMeshLoadedCallback(self);
 			self.calcBBox();
 		});

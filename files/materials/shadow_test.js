@@ -1,31 +1,31 @@
 
-var mat = new Materials.Material('shadow_test');
+Materials.ShadowTest = function() {
 
-mat.init = function() {
-	
-	this.shader = Shaders.get('shadow_test');
-	this.mode = gl.TRIANGLES;
+	if (!Materials.ShadowTest.prototype.shader) Materials.ShadowTest.prototype.shader = Shaders.get('shadow_test');
+	if (!Materials.ShadowTest.prototype.per )   Materials.ShadowTest.prototype.per = {transform : null, lightmapOff : null};
+	if (!Materials.ShadowTest.prototype.mode)   Materials.ShadowTest.prototype.mode = gl.TRIANGLES;
+
 	this.pre = {
 		shadowMapMatrix : null,
         sampleCount     : 0,
         light           : null,
         lightmapMult    : 1,
 	};
-	this.per = {
-        transform       : null,
-		lightmapOff     : null,
-	};
 }
 
-mat.connect = function(atlas) {
+Materials.ShadowTest.prototype = new Materials.Material();
+
+Materials.ShadowTest.prototype.connect = function(atlas) {
 	this.pre.lightmapMult = atlas.delta;
 }
 
-mat.setLight = function(shadowMapMatrix, light) {
+Materials.ShadowTest.prototype.setLight = function(shadowMapMatrix, light) {
 	this.pre.shadowMapMatrix = shadowMapMatrix;
 	this.pre.light = light;
 }
 
-mat.incSample = function() {
+Materials.ShadowTest.prototype.incSample = function() {
 	this.pre.sampleCount++;
 }
+
+Materials.register('shadow_test', Materials.ShadowTest);

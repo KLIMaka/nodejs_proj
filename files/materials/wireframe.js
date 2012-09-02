@@ -1,24 +1,29 @@
 
-var mat = new Materials.Material('wireframe');
+Materials.Wireframe = function() {
 
-mat.init = function() {
-	this.shader = Shaders.get('wireframe');
+	if (!Materials.Wireframe.prototype.shader) Materials.Wireframe.prototype.shader = Shaders.get('wireframe');
+	if (!Materials.Wireframe.prototype.per )   Materials.Wireframe.prototype.per = {transform : null};
+	if (!Materials.Wireframe.prototype.mode)   Materials.Wireframe.prototype.mode = gl.LINES;
+
 	this.pre = {color : [1.0, 1.0, 1.0, 1.0]};
-	this.per = {transform : null};
-	this.mode = gl.LINES;
 }
 
-mat.onBind = function(obj) {
+Materials.Wireframe.prototype = new Materials.Material();
+
+Materials.Wireframe.prototype.onBind = function(obj) {
 	obj.onMeshLoaded(function(){
 		if (obj.mesh.lines == undefined)
-			obj.mesh.computeWireframe();
+			obj.mesh.computeMaterials.Wireframe();
 	});
 }
 
-mat.setColor = function(r,g,b,a) {
+Materials.Wireframe.prototype.setColor = function(r, g, b, a) {
 	this.pre.color[0] = r;
 	this.pre.color[1] = g;
 	this.pre.color[2] = b;
 	this.pre.color[3] = a;
 }
+
+
+Materials.register('wireframe', Materials.Wireframe);
 

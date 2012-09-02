@@ -37,24 +37,21 @@ var Materials = {
 	list : {},
 	lastID : 1,
 
-	Material : function(name) {
-
-		this.name = name;
-		this.id = Materials.lastID++;
-		this.mode = 0;
-		this.shader = null;
-		this.inited = false;
-		
-		Materials.list[name] = this;
+	register : function(name, constructor) {
+		Materials.list[name] = constructor;
 	},
 
 	get : function(name) {
 		
-		var mat = Materials.list[name];
-		if (mat && !mat.inited)
-			mat.init();
-		return mat;
-	}
+		var constructor = Materials.list[name];
+		if (constructor == undefined)
+			return null;
+
+		return new constructor();
+	},
+
+	Material : function() {
+	},
 }
 
 
