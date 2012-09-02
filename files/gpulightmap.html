@@ -47,14 +47,16 @@ var pan1 = ui.createPanel(UI.Panel)
 
 var cube = new Entity.Model('models/pivot.obj').setScale(1).setPos(400, 400, 0);
 
-var xHandle = new Entity.Model('models/cube.obj').setScale(0.1);
-var yHandle = new Entity.Model('models/cube.obj').setScale(0.1);
-var zHandle = new Entity.Model('models/cube.obj').setScale(0.1);
+var xHandle = new Entity.Model('models/pivot.obj').setScale(1);
+var yHandle = new Entity.Model('models/pivot.obj').setScale(1);
+var zHandle = new Entity.Model('models/pivot.obj').setScale(1);
 xHandle.normVec = new GL.Vector(1, 0, 0);
 xHandle.uniforms.color = [1, 0, 0, 1];
+xHandle.setAngles(0, 0, -90);
 yHandle.normVec = new GL.Vector(0, 1, 0);
 yHandle.uniforms.color = [0, 1, 0, 1];
 zHandle.normVec = new GL.Vector(0, 0, 1);
+zHandle.setAngles(90, 0, 0);
 zHandle.uniforms.color = [0, 0, 1, 1];
 var handleEnt = null;
 
@@ -91,7 +93,9 @@ var lmMat = Materials.get('tex_map');
 cube.setMaterial(lambMat);
 
 var wBuilder = new Entity.WireBuilder();
-var grid = wBuilder.buildGrid(-1, -1, 1, 1, 20).setMaterial(wmat);
+var grid = wBuilder.buildGrid(-1, -1, 1, 1, 20).setMaterial(Materials.get('wireframe'));
+grid.material.setColor(0.5, 0.5, 0.5, 1);
+grid.setScale(10);
 
 var head = new Entity.Model('models/Head.obj').setScale(0.03).setMaterial(lambMat);
 var ogre = new Entity.Model('models/boat.obj').setScale(1).setMaterial(lambMat);
@@ -246,6 +250,10 @@ var r = 0.1;
 var selMat = Materials.get('select');
 var factor = 0.4;
 
+var selected = Materials.get('wireframe');
+selected.setColor(5, 5, 5, 1);
+var a= -1, b = 1;
+
 gl.ondraw = function() {
     
     gl.loadIdentity();
@@ -254,7 +262,9 @@ gl.ondraw = function() {
     gl.clearColor(0, 0, 0, 0),
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     drawer.drawMatOverride(selMat);
+    gl.polygonOffset(-1.0, -1000000.0);
     drawHandle(selMat);
+    gl.polygonOffset(0.0, 0.0);
     pick();
 
 
@@ -267,35 +277,22 @@ gl.ondraw = function() {
     renderLightmap(dir.y < 0 ? dir.negative() : dir);
 
     gl.depthFunc(gl.ALWAYS);
-    wmat.setColor(0.5, 0.5, 0.5, 1);
-    grid.setScale(10);
     grid.draw();
     gl.depthFunc(gl.LESS);
 
-    //drawer.drawMatOverride(lmMat);
-    wmat.setColor(1,1,0,1);
-    gl.depthMask(false);
-    drawer.drawMatOverride(wmat);
-    gl.depthMask(true);
-
-    drawer.drawMat();
-    drawHandle();
-
-    // gl.disable(gl.DEPTH_TEST);
-    // var scale = ogre.position.subtract(cam.pos).length();
-    // cube.setPosVec(ogre.position);
-    // cube.setScale(scale * factor);
-    // cube.draw();
-    // gl.enable(gl.DEPTH_TEST);
-
     var ent = Entity.get(mouse.object);
     if (ent) {
-        var bbox = ent.bbox();
-        selectCube.setPosVec(ent.position.add(bbox.position.multiply(ent.scale)));
-        selectCube.setScaleVec(bbox.scale.multiply(ent.scale));
-        selectCube.setAnglesVec(ent.angles);
-        selectCube.draw();
+        gl.depthMask(false);
+        selected.begin();
+        selected.draw(ent);
+        gl.depthMask(true);
     }
+
+    // drawer.drawMat();
+    drawer.drawMatOverride(lmMat);
+    gl.polygonOffset(-1.0, -1000000.0);
+    drawHandle();
+    //gl.polygonOffset(0.0, 0.0);
 
     gl.begin2D();
     ui.draw(pan1);
@@ -306,6 +303,7 @@ gl.fullscreen();
 gl.animate();
 gl.enable(gl.CULL_FACE);
 gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.POLYGON_OFFSET_FILL);
 
 </script>
 </body></html>

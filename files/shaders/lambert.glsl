@@ -2,7 +2,8 @@ uniform mat4 transform;
 varying vec3 normal;
 
 void main() {
-	normal = gl_Normal;
+	mat3 normalmat = mat3(transform[0].xyz, transform[1].xyz, transform[2].xyz);
+	normal = normalmat * gl_Normal;
 	gl_Position = gl_ModelViewProjectionMatrix * transform * gl_Vertex;
 }
 
