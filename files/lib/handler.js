@@ -38,10 +38,33 @@ AxisHandle.prototype = {
 
 function Handler() {
 
-	this.x = 
+	this.visible = false;
+	this.xHandle = new AxisHandle(this, new GL.Vector(1,0,0), new GL.Vector(0,0,-90), [1,0,0,1]);
+	this.yHandle = new AxisHandle(this, new GL.Vector(0,1,0), new GL.Vector(0,0,0),   [0,1,0,1]);
+	this.xHandle = new AxisHandle(this, new GL.Vector(0,0,1), new GL.Vector(90,0,0),  [0,0,1,1]);
 }
 
 Handler.prototype = {
 
+	connect : function(ent) {
+		this.ent = ent;
+	},
+
+	update : function() {
+
+		this.xHandle.update(this.ent);
+		this.yHandle.update(this.ent);
+		this.zHandle.update(this.ent);
+	},
+
+	draw : function(mat) {
+
+		if (!this.visible) return;
+
+		mat.begin();
+        mat.draw(this.xHandle);
+        mat.draw(this.yHandle);
+        mat.draw(this.zHandle);
+	},
 
 }
