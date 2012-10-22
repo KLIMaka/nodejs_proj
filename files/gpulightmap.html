@@ -46,53 +46,13 @@ var pan1 = ui.createPanel(UI.Panel)
              .setMaterial(uiMat)
              .setSize(200, 200);
 
-var cube = new Entity.Model('models/pivot.obj').setScale(1).setPos(400, 400, 0);
 var handler = new Handler();
-
-// var xHandle = new Entity.Model('models/pivot.obj').setScale(1);
-// var yHandle = new Entity.Model('models/pivot.obj').setScale(1);
-// var zHandle = new Entity.Model('models/pivot.obj').setScale(1);
-// xHandle.normVec = new GL.Vector(1, 0, 0);
-// xHandle.uniforms.color = [1, 0, 0, 1];
-// xHandle.setAngles(0, 0, -90);
-// yHandle.normVec = new GL.Vector(0, 1, 0);
-// yHandle.uniforms.color = [0, 1, 0, 1];
-// zHandle.normVec = new GL.Vector(0, 0, 1);
-// zHandle.setAngles(90, 0, 0);
-// zHandle.uniforms.color = [0, 0, 1, 1];
-// var handleEnt = null;
-
-// function connectHandle(ent) {
-    
-//     xHandle.setPosVec(ent.position.add(xHandle.normVec));
-//     yHandle.setPosVec(ent.position.add(yHandle.normVec));
-//     zHandle.setPosVec(ent.position.add(zHandle.normVec));
-//     handleEnt = ent;
-// }
-
-// function drawHandle(shader) {
-
-//     if (shader != undefined) {
-//         shader.begin();
-//         shader.draw(xHandle);
-//         shader.draw(yHandle);
-//         shader.draw(zHandle);
-//     } else {
-//         lambMat.begin();
-//         lambMat.draw(xHandle);
-//         lambMat.draw(yHandle);
-//         lambMat.draw(zHandle);
-//     }
-// }
-
 
 var wmat = Materials.get('wireframe');
 var lambMat = Materials.get('lambert');
 var depthMat = Materials.get('depth');
 var shadowMat = Materials.get('shadow_test');
 var lmMat = Materials.get('tex_map');
-
-cube.setMaterial(lambMat);
 
 var wBuilder = new Entity.WireBuilder();
 var grid = wBuilder.buildGrid(-1, -1, 1, 1, 20).setMaterial(Materials.get('wireframe'));
@@ -173,41 +133,21 @@ var mouse = {
 }
 var cam = new camera();
 
-var result;
-var originalOffset;
-
 gl.onmousedown = function(e) {
 
     var ent = Entity.get(mouse.object);
-    if (ent && ent.onmousedown != undefined)
+    if (ent && ent.onmousedown != undefined) {
         ent.onmousedown(e);
-
-    // if (ent && ent.normVec != undefined) {
-    //     var tracer = new GL.Raytracer();
-    //     var ray = tracer.getRayForPixel(e.x, e.y);
-    //     result = GL.Raytracer.hitTestMesh(tracer.eye, ray, ent);
-    //     result.normal = ent.normVec;
-    //     originalOffset = ent.position.clone();
-    // } else {
-    //     result = null;
-    // }
+    }
 }
 
 gl.onmousemove = function(e) {
 
     if (e.dragging) {
         mouse.free = false;
-        if (result) {
-
-            var obj = Entity.get(mouse.object);
-            var tracer = new GL.Raytracer();
-            var ray = tracer.getRayForPixel(e.x, e.y);
-            var t = result.hit.subtract(tracer.eye).dot(result.normal) / ray.dot(result.normal);
-            var hit = tracer.eye.add(ray.multiply(t));
-            var offset = originalOffset.add(hit.subtract(result.hit));
-            handleEnt.setPosVec(GL.Vector.snap(offset.subtract(obj.normVec), 1));
-            connectHandle(handleEnt);
-
+        var ent = Entity.get(mouse.object);
+        if (ent && ent.drag != undefined) {
+            ent.drag(e);
         } else { 
             cam.updateAngles(e.deltaX, e.deltaY);
         }
@@ -245,12 +185,11 @@ gl.canvas.onmousewheel = function(e) {
 gl.canvas.onclick = function(e) {
 
     var ent = Entity.get(mouse.object);
-    if (ent && !(ent instanceof AxisHandle)) {
-        //connectHandle(ent);
+    if (ent && ent.selectable == true) {
         handler.connect(ent);
         handler.visible = true;
-    } else {
-        handler.visible = true;
+    } else if (!ent) {
+        handler.visible = false;
     }
 }
 
@@ -272,7 +211,7 @@ gl.ondraw = function() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     drawer.drawMatOverride(selMat);
     gl.polygonOffset(-1.0, -1000000.0);
-    // drawHandle(selMat);
+    handler.draw(selMat);
     gl.polygonOffset(0.0, 0.0);
     pick();
 
@@ -290,7 +229,7 @@ gl.ondraw = function() {
     gl.depthFunc(gl.LESS);
 
     var ent = Entity.get(mouse.object);
-    if (ent) {
+    if (ent && ent.selectable) {
         gl.depthMask(false);
         selected.begin();
         selected.draw(ent);
@@ -300,8 +239,8 @@ gl.ondraw = function() {
     // drawer.drawMat();
     drawer.drawMatOverride(lmMat);
     gl.polygonOffset(-1.0, -1000000.0);
-    //drawHandle();
-    //gl.polygonOffset(0.0, 0.0);
+    handler.draw(lambMat);
+    gl.polygonOffset(0.0, 0.0);
 
     gl.begin2D();
     ui.draw(pan1);

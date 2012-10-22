@@ -55,33 +55,6 @@ Scene.ObjectIterator.prototype = {
 	},
 }
 
-Scene.Shader.prototype = {
-
-	load : function(vsh, fsh) {
-		this.glShader = new GL.Shader(vsh, fsh);
-	},
-
-	activate : function(options) {
-		if (options.pre != undefined)
-			this.glShader.uniforms(options.pre);
-	},
-
-	deactivate : function(options) {
-		if (options.post != undefined)
-			this.glShader.uniforms(options.post);
-	},
-
-	draw : function(obj, options) {
-
-		var per = options.per;
-		if (per) {
-			for(i in per) per[i] = obj.uniforms[i];
-			this.glShader.uniforms(per);
-		}
-		this.glShader.draw(obj.mesh, options.mode || gl.TRIANGLES);
-	},
-}
-
 Scene.Drawer.prototype = {
 
 	loadShader : function(file) {

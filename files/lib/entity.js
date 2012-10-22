@@ -38,6 +38,7 @@ var Entity = {
 		this.position  = new GL.Vector();
 		this.scale     = new GL.Vector();
 		this.angles    = new GL.Vector();
+		this.selectable = true;
 
 		this.uniforms = {
 			id        : Entity.intTo4Bytes(this.id),
