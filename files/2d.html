@@ -37,17 +37,22 @@ var selMat = Materials.get('select');
 var points = [];
 var ui = new UI.PanelDrawer();
 var solid = Materials.get('solid_color');
+
 var Point = function(x, y) {
+
+	this.pos = {x : x, y : y};
 
 	this.model = ui.createPanel(UI.Panel)
 				   .setMaterial(solid)
 				   .setSize(Point.SIZE, Point.SIZE)
-				   .setPos(x-Point.SIZE/2.0, y-Point.SIZE/2.0);
+				   .setPos(x-Point.SIZE/2.0, y-Point.SIZE/2.0)
 	points.push(this.model);
 	
 	var self = this;
 	this.model.drag = function(e) {
 		self.model.setPos(e.x-Point.SIZE/2.0, e.y-Point.SIZE/2.0);
+		self.pos.x = e.x;
+		self.pos.y = e.y;
 	}
 	this.model.grab = function(e) {
 		self.model.uniforms.color = [1.0, 0.5, 0.0, 1.0];
@@ -57,7 +62,64 @@ var Point = function(x, y) {
 	}
 }
 
-Point.SIZE = 5;
+Point.prototype = {
+
+	setPos : function(x, y) {
+		this.pos.x = x;
+		this.pos.y = y;
+		this.model.setPos(x-Point.SIZE/2.0, y-Point.SIZE/2.0);
+	},
+
+	getPos : function() {
+		return this.pos;
+	},
+}
+
+var Sector = function(p1, p2) {
+
+	this.p1 = p1;
+	this.p2 = p2;
+	p1 = p1.getPos();
+	p2 = p2.getPos();
+
+	var len = Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
+	var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
+	ang = p2.y-p1.y < 0 ? 360 - ang : ang;
+
+	this.model = ui.createPanel(UI.Panel)
+	               .setMaterial(solid)
+	               .setSize(len, 4)
+	               .setPos(p1.x, p1.y)
+	               .setRot(ang);
+    points.push(this.model);
+
+    var self = this;
+    var drag_point = function(e) {
+    	p1 = self.p1.getPos();
+		p2 = self.p2.getPos();
+
+		var len = Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
+		var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
+		ang = p2.y-p1.y < 0 ? 360 - ang : ang;
+		self.model.setSize(len, 4)
+	              .setPos(p1.x, p1.y)
+	              .setRot(ang);
+    };
+
+    var p1drag = this.p1.model.drag;
+    this.p1.model.drag = function(e) {
+    	p1drag(e);
+    	drag_point(e);
+    }
+
+    var p2drag = this.p2.model.drag;
+    this.p2.model.drag = function(e) {
+    	p2drag(e);
+    	drag_point(e);
+    }
+}
+
+Point.SIZE = 10;
 
 var mouse = {
     x : 0,
@@ -77,7 +139,16 @@ gl.onmousedown = function(e) {
     }
 }
 
+var last = null;
 gl.onmouseup = function(e) {
+
+	if (mouse.ent == null && e.button == 1) {
+		var p = new Point(e.x, e.y);
+		if (last != null) {
+			new Sector(last, p);
+		}
+		last = p;
+	}
 
 	mouse.free = true;
 	if (mouse.ent != null && mouse.ent.drop != undefined) {
@@ -95,10 +166,15 @@ gl.onmousemove = function(e) {
     mouse.y = e.y;
 };
 
-new Point(100, 100);
-new Point(200, 100);
-new Point(100, 200);
-new Point(200, 200);
+// p1 = new Point(100, 100);
+// p2 = new Point(200, 100);
+// p3 = new Point(100, 200);
+// p4 = new Point(200, 200);
+
+// new Sector(p1, p2);
+// new Sector(p2, p3);
+// new Sector(p3, p4);
+// new Sector(p4, p1);
 
 var wBuilder = new Entity.WireBuilder();
 var grid = wBuilder.buildGrid2D(0, 0, 1000, 1000, 50).setMaterial(Materials.get('wireframe'));

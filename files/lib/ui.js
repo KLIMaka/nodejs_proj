@@ -75,6 +75,22 @@ UI.Panel.prototype = {
 		return this;
 	},
 
+	setRot : function(ang) {
+
+		var mat = new GL.Matrix();
+		mat.m[0] = this.uniforms.transform.m[0]
+		mat.m[5] = this.uniforms.transform.m[5];
+
+		var rot = GL.Matrix.rotate(ang, 0, 0, 1);
+		mat = GL.Matrix.multiply(rot, mat);
+
+		mat.m[3] = this.uniforms.transform.m[3];
+		mat.m[7] = this.uniforms.transform.m[7];
+
+		this.uniforms.transform = mat;
+		return this;
+	},
+
 	setMaterial : function(mat) {
 		this.material = mat;
 		if (mat.onBind) mat.onBind(this);
