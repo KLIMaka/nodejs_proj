@@ -2,10 +2,10 @@
 var Shaders = {
 
 	defaultShader : null,
-	getDefault : function() {
-		return Shaders.defaultShader || 
-			  (Shaders.defaultShader 
-			  	= new GL.Shader('void main(){gl_Position = vec4(0.0);}', 'void main(){gl_FragColor = vec4(0.0);}')
+	getDefault : function () {
+		return Shaders.defaultShader ||
+			  (Shaders.defaultShader
+                = new GL.Shader('void main(){gl_Position = vec4(0.0);}', 'void main(){gl_FragColor = vec4(0.0);}')
 			  );
 	},
 
@@ -85,7 +85,7 @@ Materials.Material.prototype = {
 		var shader = this.shader.glShader;
 		var per = this.per;
 		if (per) {
-			for(i in per) per[i] = obj.uniforms[i];
+			for(i in per) if (obj.uniforms[i]) per[i] = obj.uniforms[i]; else per[i] = this.default_per[i];
 			shader.uniforms(per); 
 		}
 

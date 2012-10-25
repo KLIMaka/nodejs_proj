@@ -5,6 +5,7 @@ var UI = {
 
 		this.mesh = new GL.Mesh({coords:true});
 		this.lastIndex = 0;
+		this.lastVertex = 0;
 		this.panels = {};
 	},
 
@@ -18,6 +19,8 @@ var UI = {
 			id        : Entity.intTo4Bytes(this.id),
 			transform : new GL.Matrix(),
 		}
+
+		Entity.ents[this.id] = this;
 	},
 
 }
@@ -37,22 +40,22 @@ UI.PanelDrawer.prototype = {
 		mesh.coords.push([1.0, 1.0]);
 		mesh.coords.push([1.0, 0.0]);
 
-		var li = this.lastIndex;
-		mesh.triangles.push([li+0, li+2, li+1]);
-		mesh.triangles.push([li+0, li+3, li+2]);
-		this.lastIndex += 4;
+		var lv = this.lastVertex;
+		mesh.triangles.push([lv+0, lv+2, lv+1]);
+		mesh.triangles.push([lv+0, lv+3, lv+2]);
+		this.lastVertex += 4;
 
 		mesh.compile();
 
-		return li;
+		return this.lastIndex += 6;
 	}, 
 
 	createPanel : function(constructor) {
 		return new constructor(this);
 	},
 
-	draw : function(panel) {
-		var mat = panel.material;
+	draw : function(panel, mat) {
+		mat = mat || panel.material;
 		mat.begin();
 		mat.drawBuffers(panel, this.mesh.vertexBuffers, this.mesh.indexBuffers.triangles);
 	},

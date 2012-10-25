@@ -210,7 +210,7 @@ gl.ondraw = function() {
     gl.clearColor(0, 0, 0, 0),
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     drawer.drawMatOverride(selMat);
-    gl.polygonOffset(-1.0, -1000000.0);
+    gl.polygonOffset(-1.0, -10000000.0);
     handler.draw(selMat);
     gl.polygonOffset(0.0, 0.0);
     pick();
@@ -238,7 +238,7 @@ gl.ondraw = function() {
 
     // drawer.drawMat();
     drawer.drawMatOverride(lmMat);
-    gl.polygonOffset(-1.0, -1000000.0);
+    gl.polygonOffset(-1.0, -10000000.0);
     handler.draw(lambMat);
     gl.polygonOffset(0.0, 0.0);
 

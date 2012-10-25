@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html><body>
+
+<script src="lightgl/vector.js" type="text/javascript"></script>
+<script src="lightgl/matrix.js" type="text/javascript"></script>
+<script src="lightgl/mesh.js" type="text/javascript"></script>
+<script src="lightgl/raytracer.js" type="text/javascript"></script>
+<script src="lightgl/shader.js" type="text/javascript"></script>
+<script src="lightgl/texture.js" type="text/javascript"></script>
+<script src="lightgl/main.js" type="text/javascript"></script>
+
+<script src="lib/cache.js" type="text/javascript"></script>
+<script src="lib/entity.js" type="text/javascript"></script>
+<script src="lib/drawer.js" type="text/javascript"></script>
+<script src="lib/shaders.js" type="text/javascript"></script>
+<script src="lib/ui.js" type="text/javascript"></script>
+<script src="lib/handler.js" type="text/javascript"></script>
+<script src="lib/utils.js" type="text/javascript"></script>
+
+<script src="materials/wireframe.js" type="text/javascript"></script>
+<script src="materials/lambert.js" type="text/javascript"></script>
+<script src="materials/select.js" type="text/javascript"></script>
+<script src="materials/depth.js" type="text/javascript"></script>
+<script src="materials/shadow_test.js" type="text/javascript"></script>
+<script src="materials/tex_map.js" type="text/javascript"></script>
+<script src="materials/ui.js" type="text/javascript"></script>
+<script src="materials/solid_color.js" type="text/javascript"></script>
+
+<script>
+
+var gl = GL.create({
+    antialias: false,
+});
+extend(gl);
+
+var selMat = Materials.get('select');
+var points = [];
+var ui = new UI.PanelDrawer();
+var solid = Materials.get('solid_color');
+var Point = function(x, y) {
+
+	this.model = ui.createPanel(UI.Panel)
+				   .setMaterial(solid)
+				   .setSize(Point.SIZE, Point.SIZE)
+				   .setPos(x-Point.SIZE/2.0, y-Point.SIZE/2.0);
+	points.push(this.model);
+	
+	var self = this;
+	this.model.drag = function(e) {
+		self.model.setPos(e.x-Point.SIZE/2.0, e.y-Point.SIZE/2.0);
+	}
+	this.model.grab = function(e) {
+		self.model.uniforms.color = [1.0, 0.5, 0.0, 1.0];
+	}
+	this.model.drop = function(e) {
+		self.model.uniforms.color = [1.0, 1.0, 1.0, 1.0];
+	}
+}
+
+Point.SIZE = 5;
+
+var mouse = {
+    x : 0,
+    y : 0,
+    object : null,
+    free : true,
+    ent : null,
+}
+
+gl.onmousedown = function(e) {
+
+	mouse.free = false;
+	var ent = Entity.get(mouse.object);
+    if (ent && ent.grab != undefined) {
+        ent.grab(e);
+        mouse.ent = ent;
+    }
+}
+
+gl.onmouseup = function(e) {
+
+	mouse.free = true;
+	if (mouse.ent != null && mouse.ent.drop != undefined) {
+		mouse.ent.drop(e);
+	}
+	mouse.ent = null;
+}
+
+gl.onmousemove = function(e) {
+
+	if (mouse.ent != null && mouse.ent.drag != undefined) {
+        mouse.ent.drag(e);
+    } 
+    mouse.x = e.x;
+    mouse.y = e.y;
+};
+
+new Point(100, 100);
+new Point(200, 100);
+new Point(100, 200);
+new Point(200, 200);
+
+var wBuilder = new Entity.WireBuilder();
+var grid = wBuilder.buildGrid2D(0, 0, 1000, 1000, 50).setMaterial(Materials.get('wireframe'));
+grid.material.setColor(0.5, 0.5, 0.5, 1);
+
+
+gl.ondraw = function() {
+    
+    gl.begin2D();
+
+    gl.clearColor(0, 0, 0, 0),
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    for (i in points) {
+    	ui.draw(points[i], selMat);
+    }
+    pick();
+
+    gl.clearColor(0.359, 0.398, 0.449, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    grid.draw();
+    
+    for (i in points) {
+    	ui.draw(points[i]);
+    }
+
+    gl.end2D();
+   
+};
+
+gl.fullscreen();
+gl.animate();
+gl.enable(gl.CULL_FACE);
+
+</script>
+</body></html>

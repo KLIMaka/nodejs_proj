@@ -78,6 +78,17 @@ Entity.WireBuilder.prototype = {
 		return this.compile();
 	},
 
+	buildGrid2D : function(x1, y1, x2, y2, n) {
+
+		var dx = (x2-x1)/n, dy = (y2-y1)/n;
+		for (var i = 0; i <= n; i++) {
+			this.addLine(x1 + i*dx, y1, 0, x1 + i*dx, y2, 0);
+			this.addLine(x1, y1 + i*dy, 0, x2, y1 + i*dy, 0);
+		}
+
+		return this.compile();
+	},
+
 	compile : function() {
 		var model = new Entity.Model();
 		this.mesh.compile();
