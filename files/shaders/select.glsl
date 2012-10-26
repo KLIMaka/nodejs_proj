@@ -1,7 +1,8 @@
 uniform mat4 transform;
 
 void main() {
-	gl_Position = gl_ModelViewProjectionMatrix * transform * gl_Vertex;
+	vec4 vert = vec4(gl_Vertex.xyz * 10.0, 1.0);
+	gl_Position = gl_ModelViewProjectionMatrix * transform * vert;
 }
 
 ###

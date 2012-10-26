@@ -29,7 +29,7 @@
 <script>
 
 var gl = GL.create({
-    antialias: false,
+    antialias: true,
 });
 extend(gl);
 
@@ -63,7 +63,7 @@ var Point = function(x, y) {
 	}
 }
 
-Point.SIZE = 8;
+Point.SIZE = 5;
 
 Point.prototype = {
 
@@ -117,7 +117,7 @@ Point.prototype = {
 	},
 }
 
-var Sector = function(p1, p2) {
+var Segment = function(p1, p2) {
 
 	this.p1 = p1;
 	this.p2 = p2;
@@ -130,7 +130,7 @@ var Sector = function(p1, p2) {
 
 	this.model = ui.createPanel(UI.Panel, {cy:0.5, cz:-1})
 	               .setMaterial(solid)
-	               .setSize(len, 4)
+	               .setSize(len, 2)
 	               .setPos(p1.x, p1.y)
 	               .setRot(ang);
     points.push(this.model);
@@ -143,7 +143,7 @@ var Sector = function(p1, p2) {
 		var len = Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
 		var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
 		ang = p2.y-p1.y < 0 ? 360 - ang : ang;
-		self.model.setSize(len, 4)
+		self.model.setSize(len, 2)
 	              .setPos(p1.x, p1.y)
 	              .setRot(ang);
     };
@@ -189,7 +189,7 @@ gl.onmouseup = function(e) {
 		var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
 		var p = new Point(npos.x, npos.y);
 		if (last != null) {
-			new Sector(last, p);
+			new Segment(last, p);
 		}
 		last = p;
 	}
