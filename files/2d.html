@@ -41,37 +41,79 @@ var solid = Materials.get('solid_color');
 var Point = function(x, y) {
 
 	this.pos = {x : x, y : y};
+	this.events = {};
 
-	this.model = ui.createPanel(UI.Panel)
+	this.model = ui.createPanel(UI.Panel, {cx:0.5, cy:0.5, cz:-2})
 				   .setMaterial(solid)
 				   .setSize(Point.SIZE, Point.SIZE)
-				   .setPos(x-Point.SIZE/2.0, y-Point.SIZE/2.0)
+				   .setPos(x, y)
 	points.push(this.model);
+	this.model.uniforms.color = [0.6, 0.6, 1.0, 1.0];
 	
 	var self = this;
 	this.model.drag = function(e) {
-		self.model.setPos(e.x-Point.SIZE/2.0, e.y-Point.SIZE/2.0);
-		self.pos.x = e.x;
-		self.pos.y = e.y;
+		var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
+		self.setPos(npos.x, npos.y);
 	}
 	this.model.grab = function(e) {
 		self.model.uniforms.color = [1.0, 0.5, 0.0, 1.0];
 	}
 	this.model.drop = function(e) {
-		self.model.uniforms.color = [1.0, 1.0, 1.0, 1.0];
+		self.model.uniforms.color = [0.6, 0.6, 1.0, 1.0];
 	}
 }
+
+Point.SIZE = 8;
 
 Point.prototype = {
 
 	setPos : function(x, y) {
 		this.pos.x = x;
 		this.pos.y = y;
-		this.model.setPos(x-Point.SIZE/2.0, y-Point.SIZE/2.0);
+		this.model.setPos(x, y);
+		this.runEvent('setpos', {src : this});
+	},
+
+	move : function(dx, dy) {
+		this.pos.x += dx;
+		this.pos.y += dy;
+		this.setPos(this.pos.x, this.pos.y);
 	},
 
 	getPos : function() {
 		return this.pos;
+	},
+
+	addCallback : function(event, callback) {
+		
+		var cbs = this.events[event];
+		if (cbs == undefined) {
+			cbs = [];
+			this.events[event] = cbs;
+		}
+		if (cbs.indexOf(callback) != -1) return callback;
+		cbs.push(callback);
+		return callback;
+	},
+
+	removeCallback : function(event, callback) {
+		var cbs = this.events[event];
+		if (cbs == undefined) return false;
+		var i = cbs.indexOf(callback);
+		if (i != -1) {
+			cbs[i] = null;
+			return true;
+		}
+		return false;
+	},
+
+	runEvent : function(event, evt) {
+
+		var cbs = this.events[event];
+		if (cbs == undefined) return false;
+		for (var i = 0; i < cbs.length; i++) {
+			if (cbs[i] != null) cbs[i](evt);
+		}
 	},
 }
 
@@ -86,7 +128,7 @@ var Sector = function(p1, p2) {
 	var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
 	ang = p2.y-p1.y < 0 ? 360 - ang : ang;
 
-	this.model = ui.createPanel(UI.Panel)
+	this.model = ui.createPanel(UI.Panel, {cy:0.5, cz:-1})
 	               .setMaterial(solid)
 	               .setSize(len, 4)
 	               .setPos(p1.x, p1.y)
@@ -106,20 +148,21 @@ var Sector = function(p1, p2) {
 	              .setRot(ang);
     };
 
-    var p1drag = this.p1.model.drag;
-    this.p1.model.drag = function(e) {
-    	p1drag(e);
-    	drag_point(e);
-    }
+    this.p1.addCallback('setpos', drag_point);
+    this.p2.addCallback('setpos', drag_point);
 
-    var p2drag = this.p2.model.drag;
-    this.p2.model.drag = function(e) {
-    	p2drag(e);
-    	drag_point(e);
-    }
+	var self = this;
+    this.model.grab = function(e) {
+    	self.grab_point = new GL.Vector(e.x, e.y);
+	}
+
+    this.model.drag = function(e) {
+		var delta = GL.Vector.snap(new GL.Vector(e.x, e.y).subtract(self.grab_point), 20);
+		self.p1.move(delta.x, delta.y);
+		self.p2.move(delta.x, delta.y);
+		self.grab_point = self.grab_point.add(delta);
+	}
 }
-
-Point.SIZE = 10;
 
 var mouse = {
     x : 0,
@@ -143,7 +186,8 @@ var last = null;
 gl.onmouseup = function(e) {
 
 	if (mouse.ent == null && e.button == 1) {
-		var p = new Point(e.x, e.y);
+		var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
+		var p = new Point(npos.x, npos.y);
 		if (last != null) {
 			new Sector(last, p);
 		}
@@ -166,16 +210,6 @@ gl.onmousemove = function(e) {
     mouse.y = e.y;
 };
 
-// p1 = new Point(100, 100);
-// p2 = new Point(200, 100);
-// p3 = new Point(100, 200);
-// p4 = new Point(200, 200);
-
-// new Sector(p1, p2);
-// new Sector(p2, p3);
-// new Sector(p3, p4);
-// new Sector(p4, p1);
-
 var wBuilder = new Entity.WireBuilder();
 var grid = wBuilder.buildGrid2D(0, 0, 1000, 1000, 50).setMaterial(Materials.get('wireframe'));
 grid.material.setColor(0.5, 0.5, 0.5, 1);
@@ -186,14 +220,14 @@ gl.ondraw = function() {
     gl.begin2D();
 
     gl.clearColor(0, 0, 0, 0),
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     for (i in points) {
     	ui.draw(points[i], selMat);
     }
     pick();
 
     gl.clearColor(0.359, 0.398, 0.449, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     grid.draw();
     
@@ -208,6 +242,7 @@ gl.ondraw = function() {
 gl.fullscreen();
 gl.animate();
 gl.enable(gl.CULL_FACE);
+gl.enable(gl.DEPTH_TEST);
 
 </script>
 </body></html>
