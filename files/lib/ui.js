@@ -23,6 +23,155 @@ var UI = {
 		Entity.ents[this.id] = this;
 	},
 
+	StaticDrawer : function(n) {
+
+		this.mesh = new Mesh2D({
+			length : n,
+			attrs : {
+				gl_Vertex : {size : 3},
+				color     : {size : 4},
+				id        : {size : 4, type : Uint8Array},
+			}
+		});
+		this.idx = 0;
+		this.len = 0;
+
+	},
+
+	StaticQuad : function(builder, options) {
+
+		this.id = Entity.genID();
+		var id = Entity.intTo4Bytes(this.id);
+
+		var cx = options.cx ? options.cx : 0.0;
+		var cy = options.cy ? options.cy : 0.0;
+		var cz = options.cz ? options.cz : 0.0;
+
+		this.cx = cx;
+		this.cy = cy;
+		this.z = cz;
+		this.w = 1;
+		this.h = 1;
+		this.x = 0;
+		this.y = 0;
+		this.ang = 0;
+
+		var quad = {
+			a : {
+				gl_Vertex: [0.0 - cx, 0.0 - cy, cz],
+				id       : id,
+				color    : [1, 1, 1, 1],
+			},
+			b : {
+				gl_Vertex: [1.0 - cx, 0.0 - cy, cz],
+				id       : id,
+				color    : [1, 1, 1, 1],
+			},
+			c : {
+				gl_Vertex: [1.0 - cx, 1.0 - cy, cz],
+				id       : id,
+				color    : [1, 1, 1, 1],
+			},
+			d : {
+				gl_Vertex: [0.0 - cx, 1.0 - cy, cz],
+				id       : id,
+				color    : [1, 1, 1, 1],
+			},
+		}
+
+		this.quad = builder.mesh.addQuad(quad);
+		builder.len += 6;
+		this.builder = builder;
+		Entity.ents[this.id] = this;
+	},
+
+}
+
+UI.StaticDrawer.prototype = {
+
+	create : function(constructor, options) {
+		return new constructor(this, options || {});
+	},
+
+	draw : function(mat) {
+		mat.begin();
+		mat.drawBuffers(this, this.mesh.vertexBuffers, this.mesh.indexBuffers.triangles);
+	},
+}
+
+UI.StaticQuad.prototype = {
+
+	genTransformMatrix : function() {
+		
+		var scale = new GL.Matrix();
+		scale.m[0] = this.w
+		scale.m[5] = this.h;
+
+		var trans = new GL.Matrix();
+		trans.m[3] = this.x;
+		trans.m[7] = this.y;
+
+		var rot = GL.Matrix.rotate(this.ang, 0, 0, 1);
+
+		var mat = GL.Matrix.multiply(trans, rot);
+		mat = GL.Matrix.multiply(mat, scale, mat);
+		
+		return mat;
+	},
+
+	recalc : function() {
+
+		var mat = this.genTransformMatrix();
+		var cx = this.cx, cy = this.cy;
+		var a = mat.transformPoint(new GL.Vector(0.0 - cx, 0.0 - cy));
+		var b = mat.transformPoint(new GL.Vector(1.0 - cx, 0.0 - cy));
+		var c = mat.transformPoint(new GL.Vector(1.0 - cx, 1.0 - cy));
+		var d = mat.transformPoint(new GL.Vector(0.0 - cx, 1.0 - cy));
+
+		this.quad.a.gl_Vertex.set([a.x, a.y]);
+		this.quad.b.gl_Vertex.set([b.x, b.y]);
+		this.quad.c.gl_Vertex.set([c.x, c.y]);
+		this.quad.d.gl_Vertex.set([d.x, d.y]);
+
+		this.builder.mesh.vertexBuffers.gl_Vertex.setDirt();
+	},
+
+	setPos : function(x, y) {
+		
+		this.x = x;
+		this.y = y;
+		this.recalc();
+
+		return this;
+	}, 
+
+	setSize : function(w, h) {
+		this.w = w;
+		this.h = h;
+		this.recalc();
+		return this;
+	},
+
+	setRot : function(ang) {
+		this.ang = ang;
+		this.recalc();
+		return this;
+	},
+
+	move : function(dx, dy) {
+		this.x += dx;
+		this.y += dy;
+		this.recalc();
+		return this;
+	},
+
+	setColor : function(r ,g, b, a) {
+		this.quad.a.color.set([r,g,b,a]);
+		this.quad.b.color.set([r,g,b,a]);
+		this.quad.c.color.set([r,g,b,a]);
+		this.quad.d.color.set([r,g,b,a]);
+		this.builder.mesh.vertexBuffers.color.setDirt();
+	},
 }
 
 UI.PanelDrawer.prototype = {

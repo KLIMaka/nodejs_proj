@@ -260,6 +260,7 @@ BSP.Node.prototype = {
 
 	build : function(segments) {
 
+		segments = segments.filter(function(seg){ return !seg.start.pos.equals(seg.end.pos); });
 		if (segments.length == 0) return;
 		if (!this.line) this.line = segments[0].line.clone();
 		

@@ -66,13 +66,9 @@ var pdata = new Uint8Array(4);
 var strobe = 0;
 
 function pick() {
-	strobe++;
-	if (strobe == 10) {
-		strobe = 0;
-		gl.readPixels(mouse.x, gl.drawingBufferHeight-mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pdata);
-		if (mouse.free)
-			mouse.object = pdata[0] + pdata[1]*pow8 + pdata[2]*pow16;
-	}
+	gl.readPixels(mouse.x, gl.drawingBufferHeight-mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pdata);
+	if (mouse.free)
+		mouse.object = pdata[0] + pdata[1]*pow8 + pdata[2]*pow16;
 }
 
 GL.Raytracer.hitTestMesh = function(origin, ray, obj) {

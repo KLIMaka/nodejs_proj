@@ -13,6 +13,7 @@
 <script src="lib/entity.js" type="text/javascript"></script>
 <script src="lib/drawer.js" type="text/javascript"></script>
 <script src="lib/shaders.js" type="text/javascript"></script>
+<script src="lib/mesh.js" type="text/javascript"></script>
 <script src="lib/ui.js" type="text/javascript"></script>
 <script src="lib/handler.js" type="text/javascript"></script>
 <script src="lib/utils.js" type="text/javascript"></script>
@@ -26,6 +27,8 @@
 <script src="materials/tex_map.js" type="text/javascript"></script>
 <script src="materials/ui.js" type="text/javascript"></script>
 <script src="materials/solid_color.js" type="text/javascript"></script>
+<script src="materials/static.js" type="text/javascript"></script>
+<script src="materials/static_select.js" type="text/javascript"></script>
 
 <script>
 
@@ -34,22 +37,19 @@ var gl = GL.create({
 });
 extend(gl);
 
-var selMat = Materials.get('select');
 var points = [];
-var ui = new UI.PanelDrawer();
-var solid = Materials.get('solid_color');
+var ui = new UI.StaticDrawer(400);
 
 var Point = function(x, y) {
 
 	this.pos = {x : x, y : y};
 	this.events = {};
 
-	this.model = ui.createPanel(UI.Panel, {cx:0.5, cy:0.5, cz:-2})
-				   .setMaterial(solid)
-				   .setSize(Point.SIZE, Point.SIZE)
-				   .setPos(x, y)
+    this.model = ui.create(UI.StaticQuad, {cx:0.5, cy:0.5, cz:-2})
+                   .setSize(Point.SIZE, Point.SIZE)
+                   .setPos(x, y);
 	points.push(this.model);
-	this.model.uniforms.color = [0.6, 0.6, 1.0, 1.0];
+	this.model.setColor(0.6, 0.6, 1.0, 1.0);
 	
 	var self = this;
 	this.model.drag = function(e) {
@@ -57,14 +57,14 @@ var Point = function(x, y) {
 		self.setPos(npos.x, npos.y);
 	}
 	this.model.grab = function(e) {
-		self.model.uniforms.color = [1.0, 0.5, 0.0, 1.0];
+		self.model.setColor(1.0, 0.5, 0.0, 1.0);
 	}
 	this.model.drop = function(e) {
-		self.model.uniforms.color = [0.6, 0.6, 1.0, 1.0];
+		self.model.setColor(0.6, 0.6, 1.0, 1.0);
 	}
 }
 
-Point.SIZE = 5;
+Point.SIZE = 8;
 
 Point.prototype = {
 
@@ -129,17 +129,15 @@ var Segment = function(p1, p2) {
 	var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
 	ang = p2.y-p1.y < 0 ? 360 - ang : ang;
 
-	this.model = ui.createPanel(UI.Panel, {cy:0.5, cz:-1})
-	               .setMaterial(solid)
-	               .setSize(len, 2)
+	this.model = ui.create(UI.StaticQuad, {cy:0.5, cz:-1})
+	               .setSize(len, 4)
 	               .setPos(p1.x, p1.y)
 	               .setRot(ang);
     points.push(this.model);
 
     var midx = p1.x+(p2.x-p1.x)/2, midy = p1.y+(p2.y-p1.y)/2;
-    this.normalnodel = ui.createPanel(UI.Panel, {cy:0.5, cz:-1})
-    					 .setMaterial(solid)
-    					 .setSize(10,2)
+    this.normalnodel = ui.create(UI.StaticQuad, {cy:0.5, cz:-1})
+    					 .setSize(10,4)
     					 .setPos(midx, midy)
     					 .setRot(ang-90);
 	points.push(this.normalnodel);
@@ -152,12 +150,12 @@ var Segment = function(p1, p2) {
 		var len = Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
 		var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
 		ang = p2.y-p1.y < 0 ? 360 - ang : ang;
-		self.model.setSize(len, 2)
+		self.model.setSize(len, 4)
 	              .setPos(p1.x, p1.y)
 	              .setRot(ang);
 
         var midx = p1.x+(p2.x-p1.x)/2, midy = p1.y+(p2.y-p1.y)/2;
-        self.normalnodel.setSize(10,2).setPos(midx, midy).setRot(ang-90);
+        self.normalnodel.setSize(10,4).setPos(midx, midy).setRot(ang-90);
     };
 
     this.p1.addCallback('setpos', drag_point);
@@ -189,6 +187,7 @@ gl.onmousedown = function(e) {
 
 	mouse.free = false;
 	var ent = Entity.get(mouse.object);
+	console.log(ent);
     if (ent && ent.grab != undefined) {
         ent.grab(e);
         mouse.ent = ent;
@@ -255,7 +254,7 @@ document.onkeypress = function(e) {
 		var bsp2 = new BSP.Node(segments(1));
 		var res = BSP.intersect(bsp1, bsp2).allSegments();
 
-		points = [];
+		ui = new UI.StaticDrawer(400);
 		for(var i in res) {
 			var seg = res[i];
 			var start = seg.start.pos;
@@ -284,25 +283,23 @@ var grid = wBuilder.buildGrid2D(0, 0, 1000, 1000, 50).setMaterial(Materials.get(
 grid.material.setColor(0.5, 0.5, 0.5, 1);
 
 
+var statMat = Materials.get('static');
+var statselMat = Materials.get('static_select');
+
 gl.ondraw = function() {
     
     gl.begin2D();
 
     gl.clearColor(0, 0, 0, 0),
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    for (i in points) {
-    	ui.draw(points[i], selMat);
-    }
+	ui.draw(statselMat);
     pick();
 
     gl.clearColor(0.359, 0.398, 0.449, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     grid.draw();
-    
-    for (i in points) {
-    	ui.draw(points[i]);
-    }
+    ui.draw(statMat);
 
     gl.end2D();
    

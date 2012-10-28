@@ -10,7 +10,7 @@ var Entity = {
 	},
 
 	intTo4Bytes : function(val) {
-		return [(val&0xff)/256, ((val>>>8)&0xff)/256, ((val>>>16)&0xff)/256, ((val>>>24)&0xff)/256];
+		return [(val&0xff), ((val>>>8)&0xff), ((val>>>16)&0xff), ((val>>>24)&0xff)];
 	},
 
 	getDummyMesh : function() {

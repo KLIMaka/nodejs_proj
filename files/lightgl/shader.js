@@ -233,9 +233,9 @@ Shader.prototype = {
         gl.getAttribLocation(this.program, attribute.replace(/^gl_/, '_gl_'));
       if (location == -1 || !buffer.buffer) continue;
       this.attributes[attribute] = location;
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buffer);
+      if (buffer.bind != undefined) buffer.bind(); else gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buffer);
       gl.enableVertexAttribArray(location);
-      gl.vertexAttribPointer(location, buffer.buffer.spacing, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(location, buffer.buffer.spacing, buffer.buffer.type || gl.FLOAT, buffer.buffer.normalized || false, 0, 0);
       length = buffer.buffer.length / buffer.buffer.spacing;
     }
 
@@ -249,7 +249,7 @@ Shader.prototype = {
     // Draw the geometry.
     if (length && (!indexBuffer || indexBuffer.buffer)) {
       if (indexBuffer) {
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer.buffer);
+        if (indexBuffer.bind != undefined) indexBuffer.bind();  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer.buffer);
         offset = offset || 0;
         len = len || indexBuffer.buffer.length;
         gl.drawElements(mode, len, gl.UNSIGNED_SHORT, offset);
