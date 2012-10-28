@@ -1,5 +1,5 @@
 
-function StaticBuffer(target, type, length, spacing) {
+function StaticBuffer(target, type, length, spacing, normalized) {
 	
 	this.buffer = gl.createBuffer();
 	this.target = target;
@@ -8,11 +8,12 @@ function StaticBuffer(target, type, length, spacing) {
 	this.data = new type(length*spacing);
 	this.buffer.length = length;
 	this.buffer.spacing = spacing;
+	this.buffer.normalized = normalized;
 
 	switch (type) {
 		case Float32Array: this.buffer.type = gl.FLOAT; break;
 		case Uint16Array: this.buffer.type = gl.UNSIGNED_SHORT; break;
-		case Uint8Array: this.buffer.normalized = true; this.buffer.type = gl.UNSIGNED_BYTE; break;
+		case Uint8Array: this.buffer.type = gl.UNSIGNED_BYTE; break;
 	}
 
 	gl.bindBuffer(this.target, this.buffer);
@@ -63,7 +64,7 @@ function Mesh2D(options) {
 
 	var attrs = options.attrs;
 	for (var attribute in attrs) {
-		this.addVertexBuffer(attribute, attrs[attribute].size, attrs[attribute].type);
+		this.addVertexBuffer(attribute, attrs[attribute].size, attrs[attribute].type, attrs[attribute].normalized);
 	}
 	this.addIndexBuffer('triangles', 3);
 
@@ -72,8 +73,8 @@ function Mesh2D(options) {
 
 Mesh2D.prototype = {
 
-	addVertexBuffer : function(attribute, size, type) {
-		var buffer = this.vertexBuffers[attribute] = new StaticBuffer(gl.ARRAY_BUFFER, type || Float32Array, this.length*4, size);
+	addVertexBuffer : function(attribute, size, type, normalized) {
+		var buffer = this.vertexBuffers[attribute] = new StaticBuffer(gl.ARRAY_BUFFER, type || Float32Array, this.length*4, size, normalized);
 	},
 
 	addIndexBuffer : function(name, size) {

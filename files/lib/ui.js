@@ -29,8 +29,8 @@ var UI = {
 			length : n,
 			attrs : {
 				gl_Vertex : {size : 3},
-				color     : {size : 4},
-				id        : {size : 4, type : Uint8Array},
+				color     : {size : 4, type : Uint8Array, normalized : true},
+				id        : {size : 4, type : Uint8Array, normalized : true},
 			}
 		});
 		this.idx = 0;
@@ -60,22 +60,22 @@ var UI = {
 			a : {
 				gl_Vertex: [0.0 - cx, 0.0 - cy, cz],
 				id       : id,
-				color    : [1, 1, 1, 1],
+				color    : [127, 127, 127, 255],
 			},
 			b : {
 				gl_Vertex: [1.0 - cx, 0.0 - cy, cz],
 				id       : id,
-				color    : [1, 1, 1, 1],
+				color    : [127, 127, 127, 255],
 			},
 			c : {
 				gl_Vertex: [1.0 - cx, 1.0 - cy, cz],
 				id       : id,
-				color    : [1, 1, 1, 1],
+				color    : [255, 255, 255, 255],
 			},
 			d : {
 				gl_Vertex: [0.0 - cx, 1.0 - cy, cz],
 				id       : id,
-				color    : [1, 1, 1, 1],
+				color    : [255, 255, 255, 255],
 			},
 		}
 
@@ -166,6 +166,10 @@ UI.StaticQuad.prototype = {
 	},
 
 	setColor : function(r ,g, b, a) {
+		r = (r * 255) & 0xff;
+		g = (g * 255) & 0xff;
+		b = (b * 255) & 0xff;
+		a = (a * 255) & 0xff;
 		this.quad.a.color.set([r,g,b,a]);
 		this.quad.b.color.set([r,g,b,a]);
 		this.quad.c.color.set([r,g,b,a]);
