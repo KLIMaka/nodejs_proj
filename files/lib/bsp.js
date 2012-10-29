@@ -170,7 +170,7 @@ BSP.Line.prototype = {
 	},
 
 	side : function(point) {
-		return this.normal.dot(point) + this.w >= 0.0;
+		return this.normal.dot(point) + this.w;
 	},
 
 	splitSegment : function(segment, colinearFront, colinearBack, front, back) {
@@ -182,14 +182,14 @@ BSP.Line.prototype = {
 			var len = end.subtract(start).length();
 			var t = intersect.subtract(start).dot(end.subtract(start)) / (len*len);
 			if (t <= BSP.Line.EPSILON || t >= (1.0-BSP.Line.EPSILON)) {
-				(this.side(Math.abs(t) <= BSP.Line.EPSILON ? end : start) ? front : back).push(segment);
+				(this.side(Math.abs(t) <= BSP.Line.EPSILON ? end : start) >= 0.0 ? front : back).push(segment);
 			} else {
 				var a = new BSP.Segment(start, intersect);
 				var b = new BSP.Segment(intersect, end);
-				(this.side(start) ? front : back).push(a);
-				(this.side(end) ? front : back).push(b);
+				(this.side(start) >= 0.0 ? front : back).push(a);
+				(this.side(end) >= 0.0 ? front : back).push(b);
 			}
-		} else if (this.normal.dot(segment.start.pos)+this.w == 0.0) {
+		} else if (this.side(segment.start.pos) == 0.0) {
 			(this.normal.dot(segment.line.normal) >= 0.0 ? colinearFront : colinearBack).push(segment);
 		} else {
 			(this.side(segment.start.pos) ? front : back).push(segment);
@@ -221,6 +221,28 @@ BSP.Segment.prototype = {
 
 	toString : function() {
 		return this.start.toString();
+	},
+
+	isIntersects : function(segment) {
+
+		function sign(x) { return x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0);}
+		var s1 = sign(this.line.side(segment.start.pos));
+		var s2 = sign(this.line.side(segment.end.pos));
+		var s3 = sign(segment.line.side(this.start.pos));
+		var s4 = sign(segment.line.side(this.end.pos));
+
+		var s12 = s1 + s2;
+		var s34 = s3 + s4;
+
+		if (s1 == 0 && s2 == 0 && s3 == 0 && s4 == 0)
+			return false;
+
+		return (s12 == 0 && s34 == 0) || 
+		      !(s12 != 0 || s34 != 0);
+	},
+
+	length : function() {
+		return this.end.pos.subtract(this.start.pos).length();
 	},
 }
 

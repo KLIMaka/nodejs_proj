@@ -43,6 +43,7 @@ var Materials = {
 
 	get : function(name) {
 		
+		Namespace.include('materials.'+name);
 		var constructor = Materials.list[name];
 		if (constructor == undefined)
 			return null;

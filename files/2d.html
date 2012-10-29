@@ -2,6 +2,7 @@
 <html><body>
 
 <script src="http://code.jquery.com/jquery-1.8.2.min.js" type="text/javascript"></script>
+<script src="lib/Namespace.js" type="text/javascript"></script>
 
 <script src="lightgl/vector.js" type="text/javascript"></script>
 <script src="lightgl/matrix.js" type="text/javascript"></script>
@@ -20,17 +21,7 @@
 <script src="lib/handler.js" type="text/javascript"></script>
 <script src="lib/utils.js" type="text/javascript"></script>
 <script src="lib/bsp.js" type="text/javascript"></script>
-
-<script src="materials/wireframe.js" type="text/javascript"></script>
-<script src="materials/lambert.js" type="text/javascript"></script>
-<script src="materials/select.js" type="text/javascript"></script>
-<script src="materials/depth.js" type="text/javascript"></script>
-<script src="materials/shadow_test.js" type="text/javascript"></script>
-<script src="materials/tex_map.js" type="text/javascript"></script>
-<script src="materials/ui.js" type="text/javascript"></script>
-<script src="materials/solid_color.js" type="text/javascript"></script>
-<script src="materials/static.js" type="text/javascript"></script>
-<script src="materials/static_select.js" type="text/javascript"></script>
+<script src="lib/poly2tri.js" type="text/javascript"></script>
 
 <script>
 
@@ -53,6 +44,7 @@ var SectorBuilder = function() {
 	this.currentSector = [];
 	this.startPoint = null;
 	this.gripPoint = null;
+	this.currentSegment = null;
 }
 
 SectorBuilder.prototype = {
@@ -60,21 +52,23 @@ SectorBuilder.prototype = {
 	start : function(x ,y) {
 
 		this.startPoint = new Point(x, y);
-		this.currentSector.push(this.startPoint);
 		this.gripPoint = new Point(x, y);
-		this.currentSector.push(this.gripPoint);
-		new Segment(this.startPoint, this.gripPoint);
+		this.currentSegment = new Segment(this.startPoint, this.gripPoint);
 	},
 
 	next : function(x ,y) {
+
+		var cur_seg = new BSP.Segment(this.currentSegment.p1.pos, this.currentSegment.p2.pos);
+		if (cur_seg.length() == 0 || this.currentSector.some(function(seg){return cur_seg.isIntersects(seg)}))
+			return;
 
 		if (x == this.startPoint.pos.x && y == this.startPoint.pos.y) {
 			return this.stop();
 		}
 
 		var new_grip = new Point(x, y);
-		this.currentSector.push(new_grip);
-		new Segment(this.gripPoint, new_grip);
+		this.currentSector.push(cur_seg);
+		this.currentSegment = new Segment(this.gripPoint, new_grip);
 		this.gripPoint = new_grip;
 	},
 
@@ -86,10 +80,32 @@ SectorBuilder.prototype = {
 			this.gripPoint.setPos(start.x, start.y);
 		}
 
+		this.currentSector.push(new BSP.Segment(this.currentSegment.p1.pos, this.currentSegment.p2.pos));
 		this.sectors.push(this.currentSector);
 		this.currentSector = [];
 		this.startPoint = null;
 		this.gripPoint = null;
+		this.currentSegment = null;
+
+		var contour = [];
+		var sec = this.sectors[0];
+		for (var i  = 0; i < sec.length; i++) {
+			contour.push(new js.poly2tri.Point(sec[i].start.pos.x, sec[i].start.pos.y));
+		}
+
+		ui = new UI.StaticDrawer(400);
+		var swctx = new js.poly2tri.SweepContext(contour);
+		js.poly2tri.sweep.Triangulate(swctx);
+		var tris = swctx.GetTriangles();
+		for (var i = 0; i < tris.length; i++) {
+			var tri = tris[i];
+			var a = new Point(tri.GetPoint(0).x, tri.GetPoint(0).y);
+			var b = new Point(tri.GetPoint(1).x, tri.GetPoint(1).y);
+			var c = new Point(tri.GetPoint(2).x, tri.GetPoint(2).y);
+			new Segment(a, b);
+			new Segment(b, c);
+			new Segment(c, a);
+		}
 	},
 }
 
@@ -286,19 +302,8 @@ document.onkeypress = function(e) {
 
 	if (e.keyCode == 117 && builder.sectors.length >= 2) {
 
-		var segments = function(sec) {
-			var segments = [];
-			var sector = builder.sectors[sec];
-			for (var i = 0; i < sector.length; i++) {
-				var start = sector[i].getPos();
-				var end = i == sector.length-1 ? sector[0].getPos() : sector[i+1].getPos();
-				segments.push(new BSP.Segment([start.x,start.y],[end.x, end.y]));
-			}
-			return segments;
-		}
-
-		var bsp1 = new BSP.Node(segments(0));
-		var bsp2 = new BSP.Node(segments(1));
+		var bsp1 = new BSP.Node(builder.sectors[0]);
+		var bsp2 = new BSP.Node(builder.sectors[1]);
 		var res = BSP.intersect(bsp1, bsp2).allSegments();
 
 		ui = new UI.StaticDrawer(400);

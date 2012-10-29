@@ -103,15 +103,9 @@ UI.StaticQuad.prototype = {
 
 	genTransformMatrix : function() {
 		
-		var scale = new GL.Matrix();
-		scale.m[0] = this.w
-		scale.m[5] = this.h;
-
-		var trans = new GL.Matrix();
-		trans.m[3] = this.x;
-		trans.m[7] = this.y;
-
-		var rot = GL.Matrix.rotate(this.ang, 0, 0, 1);
+		var scale = GL.Matrix.scale(this.w, this.h, 1);
+		var trans = GL.Matrix.translate(this.x, this.y, 0);
+		var rot   = GL.Matrix.rotate(this.ang, 0, 0, 1);
 
 		var mat = GL.Matrix.multiply(trans, rot);
 		mat = GL.Matrix.multiply(mat, scale, mat);
