@@ -199,7 +199,7 @@ var Segment = function(p1, p2) {
 	ang = p2.y-p1.y < 0 ? 360 - ang : ang;
 
 	this.model = ui.create(UI.StaticQuad, {cy:0.5, cz:-1})
-	               .setSize(len, 4)
+	               .setSize(len, 2)
 	               .setPos(p1.x, p1.y)
 	               .setRot(ang);
     points.push(this.model);
@@ -219,7 +219,7 @@ var Segment = function(p1, p2) {
 		var len = Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
 		var ang = (180/Math.PI)*Math.acos((p2.x-p1.x) / len);
 		ang = p2.y-p1.y < 0 ? 360 - ang : ang;
-		self.model.setSize(len, 4)
+		self.model.setSize(len, 2)
 	              .setPos(p1.x, p1.y)
 	              .setRot(ang);
 
@@ -333,65 +333,6 @@ gl.onmousemove = function(e) {
     mouse.y = e.y;
     mouse.click = false;
 };
-
-// function triangulate() {
-//     // clear the canvas
-//     graphics.clear();
-
-//     //
-//     var contour = [];
-//     var holes = [];
-//     var offset = [ parseInt($("#offsetX").val()), parseInt($("#offsetY").val()) ];
-
-//     // parse contour
-//     $.each($("textarea#poly_contour").val().split(","), function(idx, val) {
-//         var point = val.split(" ");
-//         if (point.length == 2) {
-//             contour.push(new js.poly2tri.Point(parseInt(point[0]), parseInt(point[1])));
-//         } else return false;
-//         return true;
-//     });
-
-//     // parse holes
-//     $.each($("textarea#poly_holes").val().split("\n"), function(idx, val) {
-//         var hole = [];
-//         $.each(val.split(","), function(idx, val) {
-//             var point = val.split(" ");
-//             if (point.length == 2) {
-//                 hole.push(new js.poly2tri.Point(parseInt(point[0]), parseInt(point[1])));
-//             } else return false;
-//             return true;
-//         });
-//         holes.push(hole);
-//         return true;
-//     });
-
-//     // prepare SweepContext
-//     var swctx = new js.poly2tri.SweepContext(contour);
-//     for (var idx in holes)
-//     {
-//         swctx.AddHole(holes[idx]);
-//     }
-    
-//     // triangulate
-//     js.poly2tri.sweep.Triangulate(swctx);
-
-//     // draw result
-//     $.each(swctx.GetTriangles(), function(idx, val) {
-//         var trPoints = [ val.GetPoint(0), val.GetPoint(1), val.GetPoint(2) ];
-//         var grPoints = [
-//             new jsPoint(trPoints[0].x+offset[0], trPoints[0].y+offset[1]),
-//             new jsPoint(trPoints[1].x+offset[0], trPoints[1].y+offset[1]),
-//             new jsPoint(trPoints[2].x+offset[0], trPoints[2].y+offset[1])
-//         ];
-
-//         graphics.fillPolygon(clr, grPoints);
-//         graphics.drawPolygon(pen, grPoints);
-//         return true;
-//     });
-// } 
-
-
 
 var wBuilder = new Entity.WireBuilder();
 var grid = wBuilder.buildGrid2D(0, 0, 1000, 1000, 50).setMaterial(Materials.get('wireframe'));
