@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html><body>
 
+<script src="http://code.jquery.com/jquery-1.8.2.min.js" type="text/javascript"></script>
+
 <script src="lightgl/vector.js" type="text/javascript"></script>
 <script src="lightgl/matrix.js" type="text/javascript"></script>
 <script src="lightgl/mesh.js" type="text/javascript"></script>
@@ -32,13 +34,64 @@
 
 <script>
 
+$(document).bind("contextmenu", function(e) {
+    return false;
+});
+
 var gl = GL.create({
-    antialias: true,
+    antialias: false,
 });
 extend(gl);
 
 var points = [];
 var ui = new UI.StaticDrawer(400);
+
+var SectorBuilder = function() {
+
+	this.sectors = [];
+
+	this.currentSector = [];
+	this.startPoint = null;
+	this.gripPoint = null;
+}
+
+SectorBuilder.prototype = {
+
+	start : function(x ,y) {
+
+		this.startPoint = new Point(x, y);
+		this.currentSector.push(this.startPoint);
+		this.gripPoint = new Point(x, y);
+		this.currentSector.push(this.gripPoint);
+		new Segment(this.startPoint, this.gripPoint);
+	},
+
+	next : function(x ,y) {
+
+		if (x == this.startPoint.pos.x && y == this.startPoint.pos.y) {
+			return this.stop();
+		}
+
+		var new_grip = new Point(x, y);
+		this.currentSector.push(new_grip);
+		new Segment(this.gripPoint, new_grip);
+		this.gripPoint = new_grip;
+	},
+
+	stop : function() {
+
+		var start = this.startPoint.pos;
+		var gp = this.gripPoint.pos;
+		if (start.x != gp.x || start.y != gp.y) {
+			this.gripPoint.setPos(start.x, start.y);
+		}
+
+		this.sectors.push(this.currentSector);
+		this.currentSector = [];
+		this.startPoint = null;
+		this.gripPoint = null;
+	},
+}
 
 var Point = function(x, y) {
 
@@ -183,6 +236,8 @@ var mouse = {
     click : false,
 }
 
+var builder = new SectorBuilder();
+
 gl.onmousedown = function(e) {
 
 	mouse.free = false;
@@ -195,21 +250,21 @@ gl.onmousedown = function(e) {
     mouse.click = true;
 }
 
-var last = null;
-var first = null;
-var sector = [];
-var sectors = [];
 gl.onmouseup = function(e) {
 
-	if (mouse.ent == null && e.button == 1) {
-		var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
-		var p = new Point(npos.x, npos.y);
-		sector.push(p);
-		if (first == null) first = p;
-		if (last != null) {
-			new Segment(last, p);
+	var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
+	if (e.button == 2) {
+		if (builder.gripPoint != null) {
+			builder.stop();
+		} else {
+			builder.start(npos.x, npos.y);
 		}
-		last = p;
+		return;
+	}
+
+	if (e.button == 0 && builder.gripPoint != null) {
+		builder.next(npos.x, npos.y);
+		return;
 	}
 
 	if (mouse.ent != null && mouse.ent.drop != undefined) {
@@ -228,20 +283,12 @@ gl.onmouseup = function(e) {
 }
 
 document.onkeypress = function(e) {
-	
-	if (e.keyCode == 32 && last && first && last != first && sector.length >= 3) {
-		new Segment(last, first);
-		sectors.push(sector);
-		sector = [];
-		last = null;
-		first = null;
-	}
 
-	if (e.keyCode == 117 && sectors.length >= 2) {
+	if (e.keyCode == 117 && builder.sectors.length >= 2) {
 
 		var segments = function(sec) {
 			var segments = [];
-			var sector = sectors[sec];
+			var sector = builder.sectors[sec];
 			for (var i = 0; i < sector.length; i++) {
 				var start = sector[i].getPos();
 				var end = i == sector.length-1 ? sector[0].getPos() : sector[i+1].getPos();
@@ -271,6 +318,12 @@ gl.onmousemove = function(e) {
 	if (mouse.ent != null && mouse.ent.drag != undefined) {
         mouse.ent.drag(e);
     } 
+
+    if (builder.gripPoint != null) {
+    	var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
+    	builder.gripPoint.setPos(npos.x, npos.y);
+    }
+
     mouse.x = e.x;
     mouse.y = e.y;
     mouse.click = false;
