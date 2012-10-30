@@ -64,6 +64,7 @@ function Mesh2D(options) {
 
 	var attrs = options.attrs;
 	for (var attribute in attrs) {
+		if (!attrs.hasOwnProperty(attribute)) continue;
 		this.addVertexBuffer(attribute, attrs[attribute].size, attrs[attribute].type, attrs[attribute].normalized);
 	}
 	this.addIndexBuffer('triangles', 3);

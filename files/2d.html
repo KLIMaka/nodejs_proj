@@ -3,6 +3,7 @@
 
 <script src="http://code.jquery.com/jquery-1.8.2.min.js" type="text/javascript"></script>
 <script src="lib/Namespace.js" type="text/javascript"></script>
+<script src="lib/utils/oop.js" type="text/javascript"></script>
 
 <script src="lightgl/vector.js" type="text/javascript"></script>
 <script src="lightgl/matrix.js" type="text/javascript"></script>
@@ -35,8 +36,10 @@ var gl = GL.create({
 extend(gl);
 
 Namespace.include('lib.controller');
-var cont = new Controller.MouseControl();
-cont.handlers.add('move', function(e) {console.log('d')});
+var cont = Controller.MouseControl.create();
+
+Namespace.include('lib.tools.move');
+Tools.Move.enable(cont);
 
 
 var points = [];
@@ -248,6 +251,8 @@ var Segment = function(p1, p2) {
 	}
 }
 
+new Point(100, 100);
+
 var mouse = {
     x : 0,
     y : 0,
@@ -259,9 +264,6 @@ var mouse = {
 
 var builder = new SectorBuilder();
 
-cont.handlers.add('down0', function(mouse) {
-	var ent = Entity.get()
-})
 
 // gl.onmousedown = function(e) {
 
@@ -360,7 +362,7 @@ gl.ondraw = function() {
     gl.clearColor(0, 0, 0, 0),
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	ui.draw(statselMat);
-    pick();
+    cont.pickObject();
 
     gl.clearColor(0.359, 0.398, 0.449, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

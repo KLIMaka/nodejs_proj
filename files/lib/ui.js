@@ -40,8 +40,9 @@ var UI = {
 
 	StaticQuad : function(builder, options) {
 
-		this.id = Entity.genID();
-		var id = Entity.intTo4Bytes(this.id);
+		this.id = Services.Entities.genID();
+		var id = Services.Entities.intTo4Bytes(this.id);
+		Services.Entities.put(this.id, this);
 
 		var cx = options.cx ? options.cx : 0.0;
 		var cy = options.cy ? options.cy : 0.0;
@@ -82,7 +83,6 @@ var UI = {
 		this.quad = builder.mesh.addQuad(quad);
 		builder.len += 6;
 		this.builder = builder;
-		Entity.ents[this.id] = this;
 	},
 
 }
