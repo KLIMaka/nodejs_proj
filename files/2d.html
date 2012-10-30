@@ -34,6 +34,11 @@ var gl = GL.create({
 });
 extend(gl);
 
+Namespace.include('lib.controller');
+var cont = new Controller.MouseControl();
+cont.handlers.add('move', function(e) {console.log('d')});
+
+
 var points = [];
 var ui = new UI.StaticDrawer(400);
 
@@ -254,49 +259,55 @@ var mouse = {
 
 var builder = new SectorBuilder();
 
-gl.onmousedown = function(e) {
+cont.handlers.add('down0', function(mouse) {
+	var ent = Entity.get()
+})
 
-	mouse.free = false;
-	var ent = Entity.get(mouse.object);
-	console.log(ent);
-    if (ent && ent.grab != undefined) {
-        ent.grab(e);
-        mouse.ent = ent;
-    }
-    mouse.click = true;
-}
+// gl.onmousedown = function(e) {
 
-gl.onmouseup = function(e) {
+// 	console.log(e);
 
-	var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
-	if (e.button == 2) {
-		if (builder.gripPoint != null) {
-			builder.stop();
-		} else {
-			builder.start(npos.x, npos.y);
-		}
-		return;
-	}
+// 	mouse.free = false;
+// 	var ent = Entity.get(mouse.object);
+// 	console.log(ent);
+//     if (ent && ent.grab != undefined) {
+//         ent.grab(e);
+//         mouse.ent = ent;
+//     }
+//     mouse.click = true;
+// }
 
-	if (e.button == 0 && builder.gripPoint != null) {
-		builder.next(npos.x, npos.y);
-		return;
-	}
+// gl.onmouseup = function(e) {
 
-	if (mouse.ent != null && mouse.ent.drop != undefined) {
-		mouse.ent.drop(e);
-	}
+// 	var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
+// 	if (e.button == 2) {
+// 		if (builder.gripPoint != null) {
+// 			builder.stop();
+// 		} else {
+// 			builder.start(npos.x, npos.y);
+// 		}
+// 		return;
+// 	}
 
-	if (mouse.click == true && mouse.ent != null && mouse.ent.click != undefined) {
-		mouse.ent.click(e);
-	} else if (mouse.click == true) {
+// 	if (e.button == 0 && builder.gripPoint != null) {
+// 		builder.next(npos.x, npos.y);
+// 		return;
+// 	}
 
-	}
+// 	if (mouse.ent != null && mouse.ent.drop != undefined) {
+// 		mouse.ent.drop(e);
+// 	}
+
+// 	if (mouse.click == true && mouse.ent != null && mouse.ent.click != undefined) {
+// 		mouse.ent.click(e);
+// 	} else if (mouse.click == true) {
+
+// 	}
 	
-	mouse.ent = null;
-	mouse.free = true;
-	mouse.click = false;
-}
+// 	mouse.ent = null;
+// 	mouse.free = true;
+// 	mouse.click = false;
+// }
 
 document.onkeypress = function(e) {
 
@@ -318,21 +329,21 @@ document.onkeypress = function(e) {
 	console.log(e.keyCode);
 }
 
-gl.onmousemove = function(e) {
+// gl.onmousemove = function(e) {
 
-	if (mouse.ent != null && mouse.ent.drag != undefined) {
-        mouse.ent.drag(e);
-    } 
+// 	if (mouse.ent != null && mouse.ent.drag != undefined) {
+//         mouse.ent.drag(e);
+//     } 
 
-    if (builder.gripPoint != null) {
-    	var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
-    	builder.gripPoint.setPos(npos.x, npos.y);
-    }
+//     if (builder.gripPoint != null) {
+//     	var npos = GL.Vector.snap(new GL.Vector(e.x, e.y), 20);
+//     	builder.gripPoint.setPos(npos.x, npos.y);
+//     }
 
-    mouse.x = e.x;
-    mouse.y = e.y;
-    mouse.click = false;
-};
+//     mouse.x = e.x;
+//     mouse.y = e.y;
+//     mouse.click = false;
+// };
 
 var wBuilder = new Entity.WireBuilder();
 var grid = wBuilder.buildGrid2D(0, 0, 1000, 1000, 50).setMaterial(Materials.get('wireframe'));
