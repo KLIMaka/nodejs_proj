@@ -3,20 +3,18 @@ Namespace.include('lib.events');
 Namespace.include('lib.services.picker');
 Namespace.include('lib.services.entities');
 
-Namespace('Controller');
+Namespace('Services.Mouse', Events.Handler.create());
+Namespace('Services.Mouse', {
 
-Controller.MouseControl = Events.Handler.extend({
+	x 		: 0,
+	y 		: 0,
+	buttons : [],
+	object 	: null,
 
-	construct : function() {
-		Events.Handler.construct.call(this);
-
-		this.x = 0;
-		this.y = 0;
-		this.buttons = {};
-		this.object = null;
+	init : function() {
 
 		var self = this;
-	
+
 		gl.onmousemove = function(e) {
 			self.x = e.x;
 			self.y = e.y;
@@ -52,3 +50,5 @@ Controller.MouseControl = Events.Handler.extend({
 	}
 
 });
+
+Services.Mouse.init();

@@ -4,7 +4,7 @@ Namespace.include('lib.utils.holder');
 Namespace('Services.Entities', {
 
 	list   : {},
-	lastId : 0,
+	lastId : 1,
 
 	get : function(id) {
 		return Services.Entities.list[id];

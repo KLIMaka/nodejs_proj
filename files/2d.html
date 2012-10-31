@@ -35,11 +35,8 @@ var gl = GL.create({
 });
 extend(gl);
 
-Namespace.include('lib.controller');
-var cont = Controller.MouseControl.create();
-
+Namespace.include('lib.services.mouse');
 Namespace.include('lib.tools.move');
-Tools.Move.enable(cont);
 
 
 var points = [];
@@ -252,15 +249,7 @@ var Segment = function(p1, p2) {
 }
 
 new Point(100, 100);
-
-var mouse = {
-    x : 0,
-    y : 0,
-    object : null,
-    free : true,
-    ent : null,
-    click : false,
-}
+new Point(200, 200);
 
 var builder = new SectorBuilder();
 
@@ -362,7 +351,7 @@ gl.ondraw = function() {
     gl.clearColor(0, 0, 0, 0),
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	ui.draw(statselMat);
-    cont.pickObject();
+    Services.Mouse.pickObject();
 
     gl.clearColor(0.359, 0.398, 0.449, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

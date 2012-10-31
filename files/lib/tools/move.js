@@ -1,12 +1,14 @@
+Namespace.include('lib.services.mouse');
 
 Namespace('Tools.Move', {
 
-	enable : function(controller) {
+	enable : function() {
 
 		Tools.Move.enabled = true;
-		controller.register('down0', Tools.Move.down);
-		controller.register('up0', Tools.Move.up);
-		controller.register('move', Tools.Move.move);
+		var mouse = Services.Mouse;
+		mouse.register('down0', Tools.Move.down);
+		mouse.register('up0', Tools.Move.up);
+		mouse.register('move', Tools.Move.move);
 	},
 
 	isActive : function() {
@@ -46,3 +48,5 @@ Namespace('Tools.Move', {
 	}
 
 });
+
+Tools.Move.enable();
