@@ -1,8 +1,7 @@
 
 Namespace.include('lib.utils.holder');
-Namespace('Events');
 
-Events.Handler = Class.extend({
+Namespace('Events.Handler', Class.extend({
 
 	construct : function() {
 		this.events = [];
@@ -23,4 +22,4 @@ Events.Handler = Class.extend({
 		if (list == undefined) return false;
 		list.callEach(data);
 	},
-});
+}));

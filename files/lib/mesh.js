@@ -1,5 +1,114 @@
 
-function StaticBuffer(target, type, length, spacing, normalized) {
+Namespace('GL1.Buffers', {
+
+	getGLType : function(constructor) {
+
+		switch (constructor) {
+			case Float32Array: return gl.FLOAT;
+			case Uint16Array: return gl.UNSIGNED_SHORT;
+			case Uint8Array: return gl.UNSIGNED_BYTE;
+		}
+	},
+
+
+});
+
+Namespace('GL1.Buffers.Preallocated', Class.extend({
+
+	DEFAULT_TARGET     : 'ARRAY_BUFFER',
+	DEFAULT_TYPE       : Float32Array,
+	DEFAULT_SPACING    : 4,
+	DEFAULT_NORMALIZED : false,
+	DEFAULT_DRAWTYPE   : 'STATIC_DRAW',
+
+	construct : function(length, target, type, spacing, norm, drawtype) {
+
+		this.target = target || gl[this.DEFAULT_TARGET];
+		this.type   = type || this.DEFAULT_TYPE;
+		this.spacing = spacing || this.DEFAULT_SPACING,
+		this.drawtype = drawtype || this.DEFAULT_DRAWTYPE;
+		this.length = length;
+
+		this.data = new this.type(this.length * this.spacing);
+
+		this.buffer = gl.createBuffer();
+		this.buffer.length = this.length;
+		this.buffer.spacing = spacing;
+		this.buffer.normalized = norm || this.DEFAULT_NORMALIZED;
+		this.buffer.type = GL1.Buffers.getGLType(this.type);
+
+		gl.bindBuffer(this.target, this.buffer);
+		gl.bufferData(this.target, this.length*this.spacing*this.data.BYTES_PER_ELEMENT, gl[this.drawtype]);
+
+		this.lastOff = 0;
+		this.lastID = 0;
+		this.updated = false;
+
+		this.holes = {};
+		this.holesCount = 0;
+		var self = this;
+		this.filler = function(){var arr = new Array(self.spacing); for(var i=0; i<self.spacing;i++)arr[i]=0; return arr;}();
+	},
+
+	push : function(data) {
+		
+		var off = 0;
+		if (this.holesCount != 0) {
+			var hole = keys(this.holes)[0];
+			this.data.set(data, hole*this.spacing);
+			delete this.holes[hole];
+			this.holesCount--;
+			off = hole*this.spacing;
+		} else {
+			this.data.set(data, this.lastOff);
+			off = this.lastOff;
+			this.lastOff += this.spacing;
+			this.lastID++;
+		}
+		this.setDirt();
+
+		return off;
+	},
+
+	getView : function(off) {
+		return new this.type(this.data.buffer, this.data.BYTES_PER_ELEMENT*off, this.spacing);
+	},
+
+	pushView : function(data) {
+		return this.getView(this.push(data));
+	},
+
+	remove : function(idx) {
+
+		if (this.lastID <= idx || this.holes[idx] != undefined)
+			return;
+
+		if (idx == this.lastID - 1) {
+			this.lastID--;
+			this.lastOff -= this.spacing;
+		} else {
+			this.holes[idx] = 1;
+			this.holesCount++;
+		}
+		this.data.set(this.filler, idx*this.spacing);
+
+		this.setDirt();
+	},
+
+	bind : function() {
+		gl.bindBuffer(this.target, this.buffer);
+		if (!this.updated) {
+			gl.bufferSubData(this.target, 0, this.data);
+			this.updated = true;
+		}
+	},
+
+	setDirt : function() {
+		this.updated = false;
+	},
+}));
+
+/*function StaticBuffer(target, type, length, spacing, normalized) {
 	
 	this.buffer = gl.createBuffer();
 	this.target = target;
@@ -55,6 +164,7 @@ StaticBuffer.prototype =  {
 		this.updated = false;
 	}
 }
+*/
 
 function Mesh2D(options) {
 
@@ -75,11 +185,11 @@ function Mesh2D(options) {
 Mesh2D.prototype = {
 
 	addVertexBuffer : function(attribute, size, type, normalized) {
-		var buffer = this.vertexBuffers[attribute] = new StaticBuffer(gl.ARRAY_BUFFER, type || Float32Array, this.length*4, size, normalized);
+		var buffer = this.vertexBuffers[attribute] = GL1.Buffers.Preallocated.create(this.length*4, gl.ARRAY_BUFFER, type, size, normalized);
 	},
 
 	addIndexBuffer : function(name, size) {
-		var buffer = this.indexBuffers[name] = new StaticBuffer(gl.ELEMENT_ARRAY_BUFFER, Uint16Array, this.length*2, size);
+		var buffer = this.indexBuffers[name] = GL1.Buffers.Preallocated.create(this.length*2, gl.ELEMENT_ARRAY_BUFFER, Uint16Array, size);
 	},
 
 	addQuad : function(quad) {
