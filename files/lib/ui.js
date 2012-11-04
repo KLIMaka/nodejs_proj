@@ -25,13 +25,10 @@ var UI = {
 
 	StaticDrawer : function(n) {
 
-		this.mesh = new Mesh2D({
-			length : n,
-			attrs : {
-				gl_Vertex : {size : 3},
-				color     : {size : 4, type : Uint8Array, normalized : true},
-				id        : {size : 4, type : Uint8Array, normalized : true},
-			}
+		this.mesh = GL1.Mesh.QuadMesh.create(n, {
+			gl_Vertex : {size : 3},
+			color     : {size : 4, type : Uint8Array, normalized : true},
+			id        : {size : 4, type : Uint8Array, normalized : true},
 		});
 		this.idx = 0;
 		this.len = 0;
@@ -42,6 +39,7 @@ var UI = {
 
 		this.id = Services.Entities.genID();
 		var id = Services.Entities.intTo4Bytes(this.id);
+		id = id.concat(id).concat(id).concat(id);
 		Services.Entities.put(this.id, this);
 
 		var cx = options.cx ? options.cx : 0.0;
@@ -58,27 +56,16 @@ var UI = {
 		this.ang = 0;
 
 		var quad = {
-			a : {
-				gl_Vertex: [0.0 - cx, 0.0 - cy, cz],
-				id       : id,
-				color    : [127, 127, 127, 255],
-			},
-			b : {
-				gl_Vertex: [1.0 - cx, 0.0 - cy, cz],
-				id       : id,
-				color    : [127, 127, 127, 255],
-			},
-			c : {
-				gl_Vertex: [1.0 - cx, 1.0 - cy, cz],
-				id       : id,
-				color    : [255, 255, 255, 255],
-			},
-			d : {
-				gl_Vertex: [0.0 - cx, 1.0 - cy, cz],
-				id       : id,
-				color    : [255, 255, 255, 255],
-			},
-		}
+			gl_Vertex : [0.0 - cx, 0.0 - cy, cz,
+						 1.0 - cx, 0.0 - cy, cz,
+						 1.0 - cx, 1.0 - cy, cz,
+						 0.0 - cx, 1.0 - cy, cz],
+		    id        : id,
+		    color     : [127, 127, 127, 255,
+		                 127, 127, 127, 255,
+		                 255, 255, 255, 255,
+		                 255, 255, 255, 255]
+		};
 
 		this.quad = builder.mesh.addQuad(quad);
 		builder.len += 6;
@@ -116,17 +103,13 @@ UI.StaticQuad.prototype = {
 	recalc : function() {
 
 		var mat = this.genTransformMatrix();
-		var cx = this.cx, cy = this.cy;
+		var cx = this.cx, cy = this.cy, z = this.z;
 		var a = mat.transformPoint(new GL.Vector(0.0 - cx, 0.0 - cy));
 		var b = mat.transformPoint(new GL.Vector(1.0 - cx, 0.0 - cy));
 		var c = mat.transformPoint(new GL.Vector(1.0 - cx, 1.0 - cy));
 		var d = mat.transformPoint(new GL.Vector(0.0 - cx, 1.0 - cy));
 
-		this.quad.a.gl_Vertex.set([a.x, a.y]);
-		this.quad.b.gl_Vertex.set([b.x, b.y]);
-		this.quad.c.gl_Vertex.set([c.x, c.y]);
-		this.quad.d.gl_Vertex.set([d.x, d.y]);
-
+		this.quad.gl_Vertex.set([a.x, a.y, z, b.x, b.y, z, c.x, c.y, z, d.x, d.y, z]);
 		this.builder.mesh.vertexBuffers.gl_Vertex.setDirt();
 	},
 
@@ -164,10 +147,7 @@ UI.StaticQuad.prototype = {
 		g = (g * 255) & 0xff;
 		b = (b * 255) & 0xff;
 		a = (a * 255) & 0xff;
-		this.quad.a.color.set([r,g,b,a]);
-		this.quad.b.color.set([r,g,b,a]);
-		this.quad.c.color.set([r,g,b,a]);
-		this.quad.d.color.set([r,g,b,a]);
+		this.quad.color.set([r,g,b,a,r,g,b,a,r,g,b,a,r,g,b,a]);
 		this.builder.mesh.vertexBuffers.color.setDirt();
 	},
 }

@@ -11,6 +11,7 @@ Utils.Holder.prototype = {
 	add : function(obj) {
 		var id = this.last;
 		this.list[id] = obj;
+		this.last++;
 		return new Utils.Holder.Ref(this, id);
 	},
 
