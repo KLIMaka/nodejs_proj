@@ -1,4 +1,5 @@
 
+
 var BSP = function() {
 };
 
@@ -88,6 +89,10 @@ BSP.Vector.prototype = {
 	length : function() {
 		return Math.sqrt(this.x*this.x + this.y*this.y);
 	},
+
+	 : function() {
+		return Math.abs(this.x*this.x + this.y*this.y);
+	}
 
 	unit : function() {
 		return this.scale(1.0/this.lenght());
@@ -179,8 +184,8 @@ BSP.Line.prototype = {
 		if (intersect != null) {
 			var start = segment.start.pos;
 			var end = segment.end.pos;
-			var len = end.subtract(start).length();
-			var t = intersect.subtract(start).dot(end.subtract(start)) / (len*len);
+			var sqlen = end.subtract(start).sqlength();
+			var t = intersect.subtract(start).dot(end.subtract(start)) / sqlen;
 			if (t <= BSP.Line.EPSILON || t >= (1.0-BSP.Line.EPSILON)) {
 				(this.side(Math.abs(t) <= BSP.Line.EPSILON ? end : start) >= 0.0 ? front : back).push(segment);
 			} else {
@@ -195,7 +200,6 @@ BSP.Line.prototype = {
 			(this.side(segment.start.pos) ? front : back).push(segment);
 		}
 	},
-
 }
 
 BSP.Segment = function(start, end) {
@@ -239,6 +243,19 @@ BSP.Segment.prototype = {
 
 		return (s12 == 0 && s34 == 0) || 
 		      !(s12 != 0 || s34 != 0);
+	},
+
+	contain : function(vertex) {
+
+		if (this.line.side(vertex) != 0.0)
+			return false;
+
+		var start = this.start.pos;
+		var end = this.end.pos;
+		var sqlen = end.subtract(start).sqlength();
+		var t = vertex.subtract(start).dot(end.subtract(start)) / sqlen;
+
+		return t >= 0.0 && t <= 1.0;
 	},
 
 	length : function() {

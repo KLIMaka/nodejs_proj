@@ -6,16 +6,16 @@ Namespace('Tools.Move', {
 
 		Tools.Move.enabled = true;
 		var mouse = Services.Mouse;
-		mouse.register('down0', Tools.Move.down);
-		mouse.register('up0', Tools.Move.up);
-		mouse.register('move', Tools.Move.move);
+		mouse.register('down0', Tools.Move._down);
+		mouse.register('up0', Tools.Move._up);
+		mouse.register('move', Tools.Move._move);
 	},
 
 	isActive : function() {
 		return Tools.Move.ent != null;
 	},
 
-	down : function(mouse) {
+	_down : function(mouse) {
 		if (!Tools.Move.enabled) return;
 
 		var ent = mouse.object;
@@ -25,7 +25,7 @@ Namespace('Tools.Move', {
 		}
 	},
 
-	up : function(mouse) {
+	_up : function(mouse) {
 		if (!Tools.Move.enabled) return;
 		if (!Tools.Move.isActive()) return;
 
@@ -37,7 +37,7 @@ Namespace('Tools.Move', {
 		Tools.Move.ent = null;
 	},
 
-	move : function(mouse) {
+	_move : function(mouse) {
 		if (!Tools.Move.enabled) return;
 		if (!Tools.Move.isActive()) return;
 
