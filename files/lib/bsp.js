@@ -1,282 +1,49 @@
 
+Namespace('BSP', {
 
-var BSP = function() {
-};
-
-BSP.intersect = function(a, b) {
-	
-	var a_ = a.clone();
-	var b_ = b.clone();
-
-	a_.invert();
-	a_.clipTo(b_);
-	a_.invert();
-	b_.clipTo(a_);
-	a_.build(b_.allSegments());
-	return a_;
-}
-
-BSP.union = function(a, b) {
-
-	var a_ = a.clone();
-	var b_ = b.clone();
-
-	a_.invert();
-	b_.clipTo(a_);
-	a_.invert();
-	b_.invert()
-	a_.clipTo(b_);
-	b_.invert();
-	a_.build(b_.allSegments());
-	return a_;
-}
-
-BSP.Vector = function(x, y) {
-	if (arguments.length == 2) {
-		this.x = x;
-		this.y = y;
-	} else if ('x' in x) {
-		this.x = x.x;
-		this.y = x.y;
-	} else {
-		this.x = x[0];
-		this.y = x[1];
-	}
-}
-
-BSP.Vector.prototype = {
-
-	clone : function() {
-		return new BSP.Vector(this.x, this.y);
-	},
-
-	negated : function() {
-		return new BSP.Vector(-this.x, -this.y);
-	},
-
-	negate : function() {
-		this.x = -this.x;
-		this.y = -this.y;
-		return this;
-	},
-
-	add : function(a) {
-		return new BSP.Vector(this.x + a.x, this.y + a.y);
-	},
-
-	subtract : function(a) {
-		return new BSP.Vector(this.x - a.x, this.y - a.y);
-	},
-
-	scaled : function(a) {
-		return new BSP.Vector(this.x * a, this.y + a);
-	},
-
-	scale : function(a) {
-		this.x *= a;
-		this.y *= a;
-		return this;
-	},
-
-	dot : function(a) {
-		return this.x * a.x + this.y * a.y;
-	},
-
-	lerp : function(a, t) {
-		return this.add(a.subtract(this).scale(t));
-	},
-
-	length : function() {
-		return Math.sqrt(this.x*this.x + this.y*this.y);
-	},
-
-	 : function() {
-		return Math.abs(this.x*this.x + this.y*this.y);
-	}
-
-	unit : function() {
-		return this.scale(1.0/this.lenght());
-	},
-
-	normalize : function() {
-		var len = this.length();
-		this.x /= len;
-		this.y /= len;
-		return this;
-	},
-
-	orthed : function() {
-		return new BSP.Vector(-this.y, this.x);
-	},
-
-	ortho : function() {
-		var tmp = this.x;
-		this.x = -this.y;
-		this.y = tmp;
-		return this;
-	},
-
-	equals : function(a) {
-		return a.x == this.x && a.y == this.y;
-	},
-
-	toString : function() {
-		return '['+this.x+','+this.y+']';
-	},
-}
-
-BSP.Vertex = function(pos) {
-	this.pos = new BSP.Vector(pos);
-}
-
-BSP.Vertex.prototype = {
-
-	clone : function() {
-		return new BSP.Vertex(this.pos.clone());
-	},
-
-	flip : function() {
-	},
-
-	interpolate : function(other, t) {
-		return new BSP.Vertex(this.pos.lerp(other, t));
-	},
-
-	toString : function() {
-		return this.pos.toString();
-	}
-}
-
-BSP.Line = function(normal, w) {
-	this.normal = normal.clone();
-	this.w = w;
-}
-
-BSP.Line.EPSILON = 1e-5;
-
-BSP.Line.prototype = {
-
-	clone : function() {
-		return new BSP.Line(this.normal.clone(), this.w);
-	},
-
-	flip : function() {
-		this.normal.negate();
-		this.w = -this.w;
-	},
-
-	intersect : function(line) {
+	intersect : function(a, b) {
 		
-		var r = this.normal.x*line.normal.y - line.normal.x*this.normal.y;
-		if (r == 0.0) return null;
-		var x = (this.normal.y*line.w - line.normal.y*this.w) / r;
-		var y = (this.w*line.normal.x - line.w*this.normal.x) / r;
-		return new BSP.Vector(x, y);
+		var a_ = a.clone();
+		var b_ = b.clone();
+
+		a_.invert();
+		a_.clipTo(b_);
+		a_.invert();
+		b_.clipTo(a_);
+		a_.build(b_.allSegments());
+		return a_;
 	},
 
-	side : function(point) {
-		return this.normal.dot(point) + this.w;
+	union : function(a, b) {
+
+		var a_ = a.clone();
+		var b_ = b.clone();
+
+		a_.invert();
+		b_.clipTo(a_);
+		a_.invert();
+		b_.invert()
+		a_.clipTo(b_);
+		b_.invert();
+		a_.build(b_.allSegments());
+		return a_;
 	},
+});
 
-	splitSegment : function(segment, colinearFront, colinearBack, front, back) {
+Namespace('BSP.Node', Class.extend({
 
-		var intersect = this.intersect(segment.line);
-		if (intersect != null) {
-			var start = segment.start.pos;
-			var end = segment.end.pos;
-			var sqlen = end.subtract(start).sqlength();
-			var t = intersect.subtract(start).dot(end.subtract(start)) / sqlen;
-			if (t <= BSP.Line.EPSILON || t >= (1.0-BSP.Line.EPSILON)) {
-				(this.side(Math.abs(t) <= BSP.Line.EPSILON ? end : start) >= 0.0 ? front : back).push(segment);
-			} else {
-				var a = new BSP.Segment(start, intersect);
-				var b = new BSP.Segment(intersect, end);
-				(this.side(start) >= 0.0 ? front : back).push(a);
-				(this.side(end) >= 0.0 ? front : back).push(b);
-			}
-		} else if (this.side(segment.start.pos) == 0.0) {
-			(this.normal.dot(segment.line.normal) >= 0.0 ? colinearFront : colinearBack).push(segment);
-		} else {
-			(this.side(segment.start.pos) ? front : back).push(segment);
-		}
+	construct :  function(segments) {
+
+		this.line = null;
+		this.front = null;
+		this.back = null;
+		this.segments = [];
+		if (segments) this.build(segments);
 	},
-}
-
-BSP.Segment = function(start, end) {
-	
-	this.start = new BSP.Vertex(start);
-	this.end = new BSP.Vertex(end);
-	var normal = this.end.pos.subtract(this.start.pos).normalize().ortho();
-	var w = normal.dot(this.start.pos);
-	this.line = new BSP.Line(normal, -w);
-}
-
-BSP.Segment.prototype = {
-
-	clone : function() {
-		return new BSP.Segment(this.start.pos, this.end.pos);
-	},
-
-	flip : function() {
-		var tmp = this.start;
-		this.start = this.end;
-		this.end = tmp;
-	},
-
-	toString : function() {
-		return this.start.toString();
-	},
-
-	isIntersects : function(segment) {
-
-		function sign(x) { return x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0);}
-		var s1 = sign(this.line.side(segment.start.pos));
-		var s2 = sign(this.line.side(segment.end.pos));
-		var s3 = sign(segment.line.side(this.start.pos));
-		var s4 = sign(segment.line.side(this.end.pos));
-
-		var s12 = s1 + s2;
-		var s34 = s3 + s4;
-
-		if (s1 == 0 && s2 == 0 && s3 == 0 && s4 == 0)
-			return false;
-
-		return (s12 == 0 && s34 == 0) || 
-		      !(s12 != 0 || s34 != 0);
-	},
-
-	contain : function(vertex) {
-
-		if (this.line.side(vertex) != 0.0)
-			return false;
-
-		var start = this.start.pos;
-		var end = this.end.pos;
-		var sqlen = end.subtract(start).sqlength();
-		var t = vertex.subtract(start).dot(end.subtract(start)) / sqlen;
-
-		return t >= 0.0 && t <= 1.0;
-	},
-
-	length : function() {
-		return this.end.pos.subtract(this.start.pos).length();
-	},
-}
-
-BSP.Node = function(segments) {
-	
-	this.line = null;
-	this.front = null;
-	this.back = null;
-	this.segments = [];
-	if (segments) this.build(segments);
-}
-
-BSP.Node.prototype = {
 
 	clone : function() {
 		
-		var node = new BSP.Node();
+		var node = BSP.Node.create();
 		node.line = this.line && this.line.clone();
 		node.front = this.front && this.front.clone();
 		node.back = this.back && this.back.clone();
@@ -299,7 +66,8 @@ BSP.Node.prototype = {
 
 	build : function(segments) {
 
-		segments = segments.filter(function(seg){ return !seg.start.pos.equals(seg.end.pos); });
+		segments = segments.filter(function(seg){ return !seg.start.equals(seg.end); });
+
 		if (segments.length == 0) return;
 		if (!this.line) this.line = segments[0].line.clone();
 		
@@ -309,17 +77,18 @@ BSP.Node.prototype = {
 		}
 
 		if (front.length != 0) {
-			if (this.front == null) this.front = new BSP.Node();
+			if (this.front == null) this.front = BSP.Node.create();
 			this.front.build(front);
 		}
 
 		if (back.length != 0) {
-			if (this.back == null) this.back = new BSP.Node();
+			if (this.back == null) this.back = BSP.Node.create();
 			this.back.build(back);
 		}
 	},
 
 	allSegments : function() {
+
 		var segments = this.segments.slice();
 		if (this.front) segments = segments.concat(this.front.allSegments());
 		if (this.back) segments = segments.concat(this.back.allSegments());
@@ -343,5 +112,6 @@ BSP.Node.prototype = {
 		this.segments = bsp.clipSegments(this.segments);
 		if (this.front) this.front.clipTo(bsp);
 		if (this.back) this.back.clipTo(bsp);
-	}
-}
+	},
+
+}));

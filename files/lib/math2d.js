@@ -1,4 +1,10 @@
 
+Namespace('Math2D', {
+
+	EPSILON : 1e-5,
+
+});
+
 Namespace('Math2D.Vector', Class.extend({
 
 	construct : function(x, y) {
@@ -58,12 +64,12 @@ Namespace('Math2D.Vector', Class.extend({
 		return Math.sqrt(this.x*this.x + this.y*this.y);
 	},
 
-	 : function() {
+	sqlength : function() {
 		return Math.abs(this.x*this.x + this.y*this.y);
-	}
+	},
 
 	unit : function() {
-		return this.scale(1.0/this.lenght());
+		return this.scale(1.0/this.length());
 	},
 
 	normalize : function() {
@@ -131,22 +137,22 @@ Namespace('Math2D.Line', Class.extend({
 
 		var intersect = this.intersect(segment.line);
 		if (intersect != null) {
-			var start = segment.start.pos;
-			var end = segment.end.pos;
+			var start = segment.start;
+			var end = segment.end;
 			var sqlen = end.subtract(start).sqlength();
 			var t = intersect.subtract(start).dot(end.subtract(start)) / sqlen;
-			if (t <= BSP.Line.EPSILON || t >= (1.0-BSP.Line.EPSILON)) {
-				(this.side(Math.abs(t) <= BSP.Line.EPSILON ? end : start) >= 0.0 ? front : back).push(segment);
+			if (t <= Math2D.EPSILON || t >= (1.0 - Math2D.EPSILON)) {
+				(this.side(Math.abs(t) <= Math2D.EPSILON ? end : start) >= 0.0 ? front : back).push(segment);
 			} else {
-				var a = new BSP.Segment(start, intersect);
-				var b = new BSP.Segment(intersect, end);
+				var a = Math2D.Segment.create(start, intersect);
+				var b = Math2D.Segment.create(intersect, end);
 				(this.side(start) >= 0.0 ? front : back).push(a);
 				(this.side(end) >= 0.0 ? front : back).push(b);
 			}
-		} else if (this.side(segment.start.pos) == 0.0) {
+		} else if (this.side(segment.start) == 0.0) {
 			(this.normal.dot(segment.line.normal) >= 0.0 ? colinearFront : colinearBack).push(segment);
 		} else {
-			(this.side(segment.start.pos) ? front : back).push(segment);
+			(this.side(segment.start) ? front : back).push(segment);
 		}
 	},
 
@@ -181,25 +187,27 @@ Namespace('Math2D.Segment', Class.extend({
 
 	isIntersects : function(segment) {
 
-		function sign(x) { return x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0);}
-		var s1 = sign(this.line.side(segment.start));
-		var s2 = sign(this.line.side(segment.end));
-		var s3 = sign(segment.line.side(this.start));
-		var s4 = sign(segment.line.side(this.end));
+		// function sign(x) { return x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0);}
+		// var s1 = sign(this.line.side(segment.start));
+		// var s2 = sign(this.line.side(segment.end));
+		// var s3 = sign(segment.line.side(this.start));
+		// var s4 = sign(segment.line.side(this.end));
 
-		var s12 = s1 + s2;
-		var s34 = s3 + s4;
+		// var s12 = s1 + s2;
+		// var s34 = s3 + s4;
 
-		if (s1 == 0 && s2 == 0 && s3 == 0 && s4 == 0)
-			return false;
+		// if (s1 == 0 && s2 == 0 && s3 == 0 && s4 == 0)
+		// 	return false;
 
-		return (s12 == 0 && s34 == 0) || 
-		      !(s12 != 0 || s34 != 0);
+		// return (s12 == 0 && s34 == 0) || 
+		//       !(s12 != 0 || s34 != 0);
+		var inter = this.line.intersect(segment.line);
+		return inter != null && this.contain(inter) && segment.line.contain(inter);
 	},
 
 	contain : function(vertex) {
 
-		if (this.line.side(vertex) != 0.0)
+		if (Math.abs(this.line.side(vertex)) > Math2D.EPSILON)
 			return false;
 
 		var start = this.start;

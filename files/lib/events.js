@@ -11,7 +11,7 @@ Namespace('Events.Handler', Class.extend({
 
 		var list = this.events[event];
 		if (list == undefined) {
-			list = new Utils.Holder();
+			list = Utils.Holder.create();
 			this.events[event] = list;
 		}
 		return list.add(callback);

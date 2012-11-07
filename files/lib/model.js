@@ -1,27 +1,18 @@
 
-Namespace('Model.Vertex' Class.extend({
+Namespace('Model.Vertex', Math2D.Vertex.extend({
 
 	construct : function(x, y) {
-		this.x = x;
-		this.y = y;
+		Math2D.Vertex.construct.call(this, x, y);
 	},
 
-	equal : function(vtx) {
-		return this.x == vtx.x && this.y == vtx.y;
-	},
 }));
 
-Namespace('Model.Segment' Class.extend({
+Namespace('Model.Segment', Math2D.Segment.extend({
 
-	construct : function(p1, p2, front, back) {
-		this.p1 = p1;
-		this.p2 = p2;
+	construct : function(start, end, front, back) {
+		Math2D.Segment.construct.call(this, start, end);
 		this.front = front;
 		this.back = back;
-	},
-
-	intersects : function(vertex) {
-		
 	},
 
 }));
@@ -34,32 +25,21 @@ Namespace('Model.Sector', Class.extend({
 
 }));
 
-Namespace('Model.Utils', {
-
-	samePoint : function(point) {
-		return point.equals(this.point);
-	},
-
-	inersect : function(sesgment) {
-		return sesgment.intersects(this.point)
-	}
-});
-
 Namespace('Model.Level', Class.extend({
 
 	construct : function(controller) {
 
-		this.vertices = [];
-		this.segments = [];
-		this.sectors = [];
+		this.vertices = Utils.Holder.create();
+		this.segments = Utils.Holder.create();
+		this.sectors  = Utils.Holder.create();
 		this.controller = controller;
 	},
 
 	inVertices : function(vertex) {
 		
-		var vtxs = this.vertices;
-		for (var i = 0; i < vtxs.length; i++) {
-			if (vertex.equals(vtxs[i]))
+		var list = this.vertices.list;
+		for (var in list) {
+			if (vertex.equals(list[i]))
 				return true;
 		}
 		return false;
@@ -67,34 +47,37 @@ Namespace('Model.Level', Class.extend({
 
 	segmentIntersection : function(vertex) {
 		
-		var segs = this.segments;
-		for (var i = 0; i <  segs.length; i++) {
-			if (segs[i].intersects(vertsx))
-				return segs[i];
+		var list = this.vertices.list;
+		for (var in list) {
+			if (list[i].contain(vertsx))
+				return i;
 		}
 		return null;
 	},
 
 	addVertex : function(x, y) {
 
-		var utils = Model.Utils;
-		var point = Model.Vertex.create(x,y);
-		utils.samePoint.point = point;
-		if (this.vertices.some(utils.samePoint) {
+		var vertex = Model.Vertex.create(x,y);
+		if (this.inVertices(vertex))
 			return false;
+
+		this.vertices.add(vertex);
+		this.controller.addPoint(vertex);
+
+		var seg_idx = this.segmentIntersection(vertex);
+		if (seg_idx != null) {
+			var seg = this.segments.get[seg_idx];
+			var a = Math2D.Segment.create(seg.start, vertex, seg.front, seg.back);
+			var b = Math2D.Segment.create(vertex, seg.end, seg.front, seg.back);
+
+			this.segments.remove(seg_idx);
+			this.segments.add(a);
+			this.segments.add(b);
 		}
 
-		this.vertices.push(point);
-		this.controller.addPoint(point);
-
-		var seg = null;
-		if (this.segments.some(intersects)) {
-			segs = seg.split(point);
-			seg.remove();
-			
-		}
-
-
+		return true;
 	},
+
+
 
 }));
