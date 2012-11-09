@@ -182,27 +182,23 @@ Namespace('Math2D.Segment', Class.extend({
 	},
 
 	toString : function() {
-		return this.start.toString();
+		return "("+this.start.toString()+"-"+this.end.toString()+")";
 	},
 
 	isIntersects : function(segment) {
 
-		// function sign(x) { return x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0);}
-		// var s1 = sign(this.line.side(segment.start));
-		// var s2 = sign(this.line.side(segment.end));
-		// var s3 = sign(segment.line.side(this.start));
-		// var s4 = sign(segment.line.side(this.end));
+		if (this.start.equals(segment.start) || this.start.equals(segment.start) ||
+			this.end.equals(segment.start) || this.end.equals(segment.end)) {
+			return false;
+		}
 
-		// var s12 = s1 + s2;
-		// var s34 = s3 + s4;
+		if (this.contain(segment.start) || this.contain(segment.end) || 
+			segment.contain(this.start) || segment.contain(this.end)) {
+			return true;
+		}
 
-		// if (s1 == 0 && s2 == 0 && s3 == 0 && s4 == 0)
-		// 	return false;
-
-		// return (s12 == 0 && s34 == 0) || 
-		//       !(s12 != 0 || s34 != 0);
 		var inter = this.line.intersect(segment.line);
-		return inter != null && this.contain(inter) && segment.line.contain(inter);
+		return inter != null && this.contain(inter) && segment.contain(inter);
 	},
 
 	contain : function(vertex) {
@@ -215,7 +211,7 @@ Namespace('Math2D.Segment', Class.extend({
 		var sqlen = end.subtract(start).sqlength();
 		var t = vertex.subtract(start).dot(end.subtract(start)) / sqlen;
 
-		return t >= 0.0 && t <= 1.0;
+		return !(t <= Math2D.EPSILON || t >= (1.0 - Math2D.EPSILON));
 	},
 
 	length : function() {
