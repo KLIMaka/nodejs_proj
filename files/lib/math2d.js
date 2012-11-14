@@ -2,6 +2,21 @@
 Namespace('Math2D', {
 
 	EPSILON : 1e-5,
+	rad2deg : 180/Math.PI,
+	deg2rad : Math.PI/180,
+
+	isCW : function(polygon) {
+
+		var angsum = 0;
+		for (var i = 0; i < polygon.length; i++) {
+			var a = polygon[i-1 < 0 ? polygon.length-1 : i-1];
+			var b = polygon[i+1 >= polygon.length ? 0 : i+1];
+			var c = polygon[i];
+			angsum += c.angle(a,b);
+		}
+
+		return angsum == 180*(polygon.length-2);
+	},
 
 });
 
@@ -90,6 +105,13 @@ Namespace('Math2D.Vector', Class.extend({
 		return this;
 	},
 
+	ang : function() {
+		var unit = this.unit();
+		var ang = Math2D.rad2deg*Math.acos(unit.x);
+		ang = unit.y < 0 ? 360 - ang : ang;
+		return -ang;
+	},
+
 	equals : function(a) {
 		return a.x == this.x && a.y == this.y;
 	},
@@ -100,6 +122,14 @@ Namespace('Math2D.Vector', Class.extend({
 }));
 
 Namespace('Math2D.Vertex', Math2D.Vector.extend({
+
+	angle : function(a, b) {
+
+		var toA = Math2D.Vector.create(a.x - this.x, a.y - this.y);
+		var toB = Math2D.Vector.create(b.x - this.x, b.y - this.y);
+		var ang = toB.ang() - toA.ang();
+		return ang < 0 ? 360 + ang : ang;
+	},
 
 }));
 
