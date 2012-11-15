@@ -1,10 +1,18 @@
 
-Namespace('Ulils.List', Class.extend({
+Namespace('Utils.List', Class.extend({
 
 	construct : function(obj) {
 		this.obj = obj == undefined ? null : obj;
 		this.prev = null;
 		this.next = null;
+	},
+
+	fromArray : function(array) {
+		var head = Utils.List.create(array[0]);
+		for (var i = 1; i < array.length; i++) {
+			head.pushBack(Utils.List.create(array[i]));
+		}
+		return head;
 	},
 
 	unlink : function() {
@@ -27,12 +35,12 @@ Namespace('Ulils.List', Class.extend({
 
 	linkNext : function(list) {
 		this.next = list;
-		list.prev = this;
+		if (list != null) list.prev = this;
 	},
 
 	linkPrev : function(list) {
 		this.prev = list;
-		list.next = this;
+		if (list != null) list.next = this;
 	},
 
 	pushBack : function(list) {
@@ -59,11 +67,12 @@ Namespace('Ulils.List', Class.extend({
 		if (this.obj == null) {
 			this.obj = obj;
 		} else {
-			this.insertAfter(Ulils.List.create(obj));
+			this.insertAfter(Utils.List.create(obj));
 		}
 	},
 
 	remove : function(obj) {
+
 		var node = this;
 		while (node != null && node.obj !== obj) node = node.next;
 		if (node != null && node !== this) {
@@ -81,8 +90,21 @@ Namespace('Ulils.List', Class.extend({
 		}
 	},
 
-	replace : function(list) {
+	replace : function(obj, list) {
 		
+		var node = this;
+		while (node != null && node.obj !== obj) node = node.next;
+
+		if (node != null && node !== this) {
+			list.linkPrev(node.prev);
+			list.last().linkNext(node.next);
+			node.unlink();
+		} else if (node != null && node === this) {
+			this.obj = list.obj;
+			if (list.next != null) {
+				this.insertAfter(list.next);
+			}
+		}
 	},
 
 }));

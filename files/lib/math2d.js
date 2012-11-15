@@ -192,8 +192,8 @@ Namespace('Math2D.Segment', Class.extend({
 
 	construct : function(start, end) {
 
-		this.start = Math2D.Vertex.create(start);
-		this.end = Math2D.Vertex.create(end);
+		this.start = start;
+		this.end = end;
 
 		var normal = this.end.subtract(this.start).normalize().ortho();
 		var w = normal.dot(this.start);
@@ -201,7 +201,7 @@ Namespace('Math2D.Segment', Class.extend({
 	},
 
 	clone : function() {
-		return Math2D.Segment.create(this.start, this.end);
+		return Math2D.Segment.create(this.start.clone(), this.end.clone());
 	},
 
 	flip : function() {

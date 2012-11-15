@@ -1,4 +1,25 @@
 
+Namespace('Utils.Holder.Ref', Class.extend({
+
+	construct : function(holder, id) {
+		this.holder = holder;
+		this.id = id;
+	},
+
+	remove : function() {
+		delete this.holder.list[id];
+	},
+
+	get : function() {
+		return this.holder.list[id];
+	},
+
+	set : function(obj) {
+		this.holder.list[id] = obj;
+	},
+
+}));
+
 Namespace('Utils.Holder', Class.extend({
 
 	construct : function() {
@@ -19,7 +40,7 @@ Namespace('Utils.Holder', Class.extend({
 
 	remove : function(id) {
 		delete this.list[id];
-	}
+	},
 
 	toArray : function() {
 		var list = this.list;
@@ -35,27 +56,6 @@ Namespace('Utils.Holder', Class.extend({
 		for (var i in list) {
 			list[i](arg);
 		}
-	},
-
-}));
-
-Namespace('Utils.Holder.Ref', Class.extend({
-
-	construct : function(holder, id) {
-		this.holder = holder;
-		this.id = id;
-	},
-
-	remove : function() {
-		delete this.holder.list[id];
-	},
-
-	get : function() {
-		return this.holder.list[id];
-	},
-
-	set : function(obj) {
-		this.holder.list[id] = obj;
 	},
 
 }));
