@@ -86,6 +86,12 @@ Namespace('Model.Level', Class.extend({
 			pts.push(this.addVertex(vtxs[i][0], vtxs[i][1]));
 		}
 
+		if (!Math2D.isCW(pts)) {
+			pts.reverse();
+			if (!Math2D.isCW(pts))
+				return null;
+		}
+
 		var segs = [];
 		for (var i = 0; i < pts.length; i++) {
 			var a = pts[i];
@@ -134,7 +140,7 @@ Namespace('Model.Level', Class.extend({
 			var b = Model.Segment.create(vertex, seg.end, seg.front, seg.back);
 
 			if (seg.front != null) {
-				seg.front.segments.replace(seg, Ulils.List.fromArray([a,b]));
+				seg.front.segments.replace(seg, Utils.List.fromArray([a,b]));
 			}
 			if (seg.back != null) {
 				seg.back.segments.replace(seg, Utils.List.fromArray([b,a]));

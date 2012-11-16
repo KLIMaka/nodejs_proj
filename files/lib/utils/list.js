@@ -107,4 +107,14 @@ Namespace('Utils.List', Class.extend({
 		}
 	},
 
+	toString : function() {
+		var node = this;
+		var vals = [];
+		while (node != null) {
+			str.push(node.obj.toString());
+			node = node.next;
+		}
+		return '(' + vals.join(', ') + ')';
+	},
+
 }));
