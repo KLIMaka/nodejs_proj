@@ -111,7 +111,7 @@ Namespace('Utils.List', Class.extend({
 		var node = this;
 		var vals = [];
 		while (node != null) {
-			str.push(node.obj.toString());
+			vals.push(node.obj.toString());
 			node = node.next;
 		}
 		return '(' + vals.join(', ') + ')';

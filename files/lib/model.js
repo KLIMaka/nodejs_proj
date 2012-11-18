@@ -21,12 +21,25 @@ Namespace('Model.Vertex', Math2D.Vertex.extend({
 		var head = this.adjSegments;
 		while (head != null) {
 			var seg = head.obj;
-			if (seg.start.equals(other) || seg.end.equals(other)) {
+			if (seg.start === other || seg.end === other) {
 				return seg;
 			}
 			head = head.next;
 		}
 		return false;
+	},
+
+	replace : function(other) {
+
+		var head = this.adjSegments;
+		while (head != null) {
+			if (head.obj.start === this) {
+				head.obj.setStart(other);
+			} else {
+				head.obj.setEnd(other);
+			}
+			head = head.next;
+		}
 	},
 
 }));
@@ -47,6 +60,14 @@ Namespace('Model.Segment', Math2D.Segment.extend({
 		this.end.disconnectFromSegment(this);
 	},
 
+	setStart : function(start) {
+		this.start = start;
+	},
+
+	setEnd : function(end) {
+		this.end = end;
+	},
+
 }));
 
 Namespace('Model.Sector', Class.extend({
@@ -65,6 +86,34 @@ Namespace('Model.Sector', Class.extend({
 				order = (node.next.obj.start.equals(seg.end) || node.next.obj.start.equals(seg.start));
 			node = node.next
 		}
+	},
+
+	containVertex : function(vtx) {
+
+		var list = this.segments;
+		while (list != null) {
+			var seg = list.obj;
+			if (seg.start === vtx || seg.end === vtx)
+				return seg;
+			list = list.next;
+		}
+		return null;
+	},
+
+	getEdge : function(vtx) {
+
+		var seg = containVertex(vtx);
+		if (seg == null) return null;
+
+		var next = this.segments.next.obj;
+		if (seg === this.segments.obj) {
+			if (!(next.start === vtx || next.end === vtx)) {
+				var last = next.last().obj;
+				return [(last.start === vtx ? last.end : last.start), vtx, (seg.start == vtx ? seg.end : seg.start)];
+			}
+		}
+
+		return [(seg.start == vtx ? seg.end : seg.start), vtx, (next.start == vtx ? next.end : next.start)];
 	},
 
 }));
@@ -114,12 +163,33 @@ Namespace('Model.Level', Class.extend({
 		return null;
 	},
 
-	segmentIntersection : function(vertex) {
+	onSegment : function(vertex) {
 		
 		var list = this.segments.list;
 		for (var i in list) {
 			if (list[i].contain(vertex))
 				return i;
+		}
+		return null;
+	},
+
+	intersectSegment : function(seg) {
+
+		var list = this.segments.list;
+		for (var i in list) {
+			if (list[i].isIntersects(seg))
+				return true;
+		}
+		return false;
+	},
+
+	getContainigSector : function(seg) {
+
+		var list = this.sectors.list;
+		for (var i in list) {
+			var sec = list[i];
+			if (sec.containVertex(seg.start) != null && sec.containVertex(seg.end) != null)
+				return sec;
 		}
 		return null;
 	},
@@ -133,7 +203,7 @@ Namespace('Model.Level', Class.extend({
 
 		this.vertices.add(vertex);
 
-		var seg_idx = this.segmentIntersection(vertex);
+		var seg_idx = this.onSegment(vertex);
 		if (seg_idx != null) {
 			var seg = this.segments.get(seg_idx);
 			var a = Model.Segment.create(seg.start, vertex, seg.front, seg.back);
@@ -154,6 +224,45 @@ Namespace('Model.Level', Class.extend({
 		}
 
 		return vertex;
+	},
+
+	weld : function(p1 ,p2) {
+
+		var p1_idx = this.vertices.getId(p1);
+		var p2_idx = this.vertices.getId(p2);
+
+		if (p1_idx == null || p2_idx == null)	return null;
+
+		var conseg = p1.isConnected(p2);
+		if (conseg == null) return null;
+		var conseg_idx = this.segments.getId(conseg);
+
+		if (conseg.front != null) conseg.front.segments.remove(conseg);
+		if (conseg.back != null) conseg.back.segments.remove(conseg);
+
+		conseg.remove();
+		this.segments.remove(conseg_idx);
+		p2.replace(p1);
+		this.vertices.remove(p2_idx);
+
+		return p1;
+	},
+
+	splitSector : function(p1, p2) {
+
+		var p1_idx = this.vertices.getId(p1);
+		var p2_idx = this.vertices.getId(p2);
+
+		if (p1_idx == null || p2_idx == null)	return false;
+
+		var conseg = p1.isConnected(p2);
+		if (conseg != null) return false;
+
+		var seg = Model.Segment.create(p1, p2);
+		if (this.intersectSegment(seg)) {
+			seg.remove();
+			return false;
+		}
 	},
 
 }));

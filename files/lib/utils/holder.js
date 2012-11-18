@@ -38,6 +38,15 @@ Namespace('Utils.Holder', Class.extend({
 		return this.list[id];
 	},
 
+	getId : function(obj) {
+		var list = this.list;
+		for (var i in list) {
+			if (obj === list[i])
+				return i;
+		}
+		return null;
+	},
+
 	remove : function(id) {
 		delete this.list[id];
 	},
