@@ -17,16 +17,16 @@ Namespace('Model.Vertex', Math2D.Vertex.extend({
 		this.adjSegments.remove(segment);
 	},
 
-	isConnected : function(other) {
+	adj : function(other) {
 		var head = this.adjSegments;
 		while (head != null) {
 			var seg = head.obj;
-			if (seg.start === other || seg.end === other) {
+			if (seg !== null && (seg.start === other || seg.end === other)) {
 				return seg;
 			}
 			head = head.next;
 		}
-		return false;
+		return null;
 	},
 
 	replace : function(other) {
@@ -68,6 +68,10 @@ Namespace('Model.Segment', Math2D.Segment.extend({
 		this.end = end;
 	},
 
+	hasVertex : function(vtx) {
+		return this.start === vtx || this.end === vtx;
+	},
+
 }));
 
 Namespace('Model.Sector', Class.extend({
@@ -83,7 +87,7 @@ Namespace('Model.Sector', Class.extend({
 			if (order) seg.front  = this;
 			else seg.back = this;
 			if (node.next != null)
-				order = (node.next.obj.start.equals(seg.end) || node.next.obj.start.equals(seg.start));
+				order = (node.next.obj.start === seg.end) || (node.next.obj.start === seg.start);
 			node = node.next
 		}
 	},
@@ -94,7 +98,7 @@ Namespace('Model.Sector', Class.extend({
 		while (list != null) {
 			var seg = list.obj;
 			if (seg.start === vtx || seg.end === vtx)
-				return seg;
+				return list;
 			list = list.next;
 		}
 		return null;
@@ -102,10 +106,11 @@ Namespace('Model.Sector', Class.extend({
 
 	getEdge : function(vtx) {
 
-		var seg = containVertex(vtx);
+		var seg = this.containVertex(vtx);
 		if (seg == null) return null;
 
-		var next = this.segments.next.obj;
+		var next = seg.next == null ? this.segments.obj : seg.next.obj;
+		seg = seg.obj;
 		if (seg === this.segments.obj) {
 			if (!(next.start === vtx || next.end === vtx)) {
 				var last = next.last().obj;
@@ -114,6 +119,37 @@ Namespace('Model.Sector', Class.extend({
 		}
 
 		return [(seg.start == vtx ? seg.end : seg.start), vtx, (next.start == vtx ? next.end : next.start)];
+	},
+
+	split : function(vtx1, vtx2, sec) {
+
+		var start = this.segments;
+		var order = this.order;
+		while ((order && (start.obj.start !== vtx1 && start.obj.start !== vtx2)) ||
+			   (!order && (start.obj.end !== vtx1 && start.obj.end !== vtx2))) {
+			order = (start.next.obj.start === start.obj.end) || (start.next.obj.start === start.obj.start);
+			start = start.next;
+		}
+
+		var start_vtx = start.obj.hasVertex(vtx1) ? vtx1 : vtx2;
+		var end_vtx = start_vtx === vtx1 ? vtx2 : vtx1;
+		var new_sector = [];
+		var end = start;
+		var order = start_vtx === start.obj.start;
+
+		do {
+			new_sector.push(end.obj);
+			end.removeThis();
+		} while (!end.obj.hasVertex(end_vtx))
+		new_sector.push(end.obj);
+		end.removeThis();
+		new_sector.push(sec);
+		end.insertBefore(Utils.List.create(sec));
+
+		if (start_vtx === vtx1) sec.front = this;
+		else                    sec.back  = this;
+
+		return Model.Sector.create(new_sector, order);
 	},
 
 }));
@@ -141,16 +177,22 @@ Namespace('Model.Level', Class.extend({
 				return null;
 		}
 
+		var order = true;
 		var segs = [];
 		for (var i = 0; i < pts.length; i++) {
 			var a = pts[i];
 			var b = pts[i+1 == pts.length ? 0 : i+1];
-			seg = Model.Segment.create(a, b, null, null);
-			this.segments.add(seg);
+			var seg = a.adj(b);
+			if (seg == null) {
+				seg = Model.Segment.create(a, b, null, null);
+				this.segments.add(seg);
+			} else if (i == 0 && seg.start !== a) {
+				order = false;
+			}
 			segs.push(seg);
 		}
 
-		return this.sectors.add(Model.Sector.create(segs, true));
+		return this.sectors.add(Model.Sector.create(segs, order));
 	},
 
 	inVertices : function(vertex) {
@@ -188,8 +230,13 @@ Namespace('Model.Level', Class.extend({
 		var list = this.sectors.list;
 		for (var i in list) {
 			var sec = list[i];
-			if (sec.containVertex(seg.start) != null && sec.containVertex(seg.end) != null)
+			var e1 = sec.getEdge(seg.start);
+			var e2 = sec.getEdge(seg.end);
+			if (e1 == null || e2 == null) continue;
+
+			if (e1[1].angle(e1[0], e1[2]) > e1[1].angle(e1[0], seg.end) && e2[1].angle(e2[0], e2[2]) > e2[1].angle(e2[0], seg.start)) {
 				return sec;
+			}
 		}
 		return null;
 	},
@@ -233,7 +280,7 @@ Namespace('Model.Level', Class.extend({
 
 		if (p1_idx == null || p2_idx == null)	return null;
 
-		var conseg = p1.isConnected(p2);
+		var conseg = p1.adj(p2);
 		if (conseg == null) return null;
 		var conseg_idx = this.segments.getId(conseg);
 
@@ -255,7 +302,7 @@ Namespace('Model.Level', Class.extend({
 
 		if (p1_idx == null || p2_idx == null)	return false;
 
-		var conseg = p1.isConnected(p2);
+		var conseg = p1.adj(p2);
 		if (conseg != null) return false;
 
 		var seg = Model.Segment.create(p1, p2);
@@ -263,6 +310,15 @@ Namespace('Model.Level', Class.extend({
 			seg.remove();
 			return false;
 		}
+
+		var consec = this.getContainigSector(seg);
+		if (consec == null) return false;
+
+		var new_sector = consec.split(seg.start, seg.end, seg);
+		this.sectors.add(new_sector);
+		this.segments.add(seg);
+
+		return new_sector;
 	},
 
 }));

@@ -90,6 +90,19 @@ Namespace('Utils.List', Class.extend({
 		}
 	},
 
+	removeThis : function() {
+
+		if (this.next == null) {
+			this.obj = null;
+		} else {
+			var next = this.next;
+			this.obj = next.obj;
+			this.next = next.next;
+			this.linkNext(next.next);
+			next.unlink();
+		}
+	},
+
 	replace : function(obj, list) {
 		
 		var node = this;
