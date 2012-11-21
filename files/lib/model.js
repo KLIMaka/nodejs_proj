@@ -185,7 +185,7 @@ Namespace('Model.Level', Class.extend({
 			var seg = a.adj(b);
 			if (seg == null) {
 				seg = Model.Segment.create(a, b, null, null);
-				this.segments.add(seg);
+				this.addSegment(seg);
 			} else if (i == 0 && seg.start !== a) {
 				order = false;
 			}
@@ -241,6 +241,23 @@ Namespace('Model.Level', Class.extend({
 		return null;
 	},
 
+	addSegment : function(seg) {
+
+		this.segments.add(seg);
+		this.controller.run('addSegment', seg);
+	},
+
+	removeSegment : function(seg) {
+		this.removeSegmentByIdx(this.segments.getId(seg));
+	},
+
+	removeSegmentByIdx : function(idx) {
+		var seg = this.segments.get(idx);
+		seg.remove();
+		this.segments.remove(idx);
+		this.controller('removeSegment', seg);
+	},
+
 	addVertex : function(x, y) {
 
 		var vertex = Model.Vertex.create(x,y);
@@ -263,11 +280,10 @@ Namespace('Model.Level', Class.extend({
 				seg.back.segments.replace(seg, Utils.List.fromArray([b,a]));
 			}
 
-			seg.remove();
-			this.segments.remove(seg_idx);
+			this.removeSegmentByIdx(seg_idx);
 
-			this.segments.add(a);
-			this.segments.add(b);
+			this.addSegment(a);
+			this.sddSegment(b);
 		}
 
 		return vertex;
@@ -282,13 +298,11 @@ Namespace('Model.Level', Class.extend({
 
 		var conseg = p1.adj(p2);
 		if (conseg == null) return null;
-		var conseg_idx = this.segments.getId(conseg);
 
 		if (conseg.front != null) conseg.front.segments.remove(conseg);
 		if (conseg.back != null) conseg.back.segments.remove(conseg);
 
-		conseg.remove();
-		this.segments.remove(conseg_idx);
+		this.removeSegment(conseg);
 		p2.replace(p1);
 		this.vertices.remove(p2_idx);
 
@@ -316,7 +330,7 @@ Namespace('Model.Level', Class.extend({
 
 		var new_sector = consec.split(seg.start, seg.end, seg);
 		this.sectors.add(new_sector);
-		this.segments.add(seg);
+		this.addSegment(seg);
 
 		return new_sector;
 	},
