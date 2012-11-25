@@ -192,7 +192,11 @@ Namespace('Model.Level', Class.extend({
 			segs.push(seg);
 		}
 
-		return this.sectors.add(Model.Sector.create(segs, order));
+		var sec = Model.Sector.create(segs, order);
+		this.sectors.add(sec);
+		this.controller.run('addSector', sec);
+
+		return sec;
 	},
 
 	inVertices : function(vertex) {
@@ -266,6 +270,7 @@ Namespace('Model.Level', Class.extend({
 			return v;
 
 		this.vertices.add(vertex);
+		this.controller.run('addVertex', vertex);
 
 		var seg_idx = this.onSegment(vertex);
 		if (seg_idx != null) {
