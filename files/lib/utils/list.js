@@ -1,4 +1,86 @@
 
+Namespace('Utils.SentinelList.Entry', Class.extend({
+
+	construct : function(obj) {
+		this.obj = obj == undefined ? null : obj;
+		this.next = null;
+		this.prev = null;
+	},
+
+	clear : function() {
+		this.next = null;
+		this.prev = null;
+		this.obj = null;
+	},
+
+}));
+
+Namespace('Utils.SentinelList', Class.extend({
+
+	construct : function(obj) {
+		this.nil = Utils.SentinelList.Entry.create();
+		this.nil.next = this.nil;
+		this.nil.prev = this.nil;
+	},
+
+	insertBefore : function(obj, ref) {
+		
+		ref = ref == undefined ? this.first() : ref;
+		var ent = Utils.SentinelList.Entry.create(obj);
+		
+		ent.next = ref;
+		ent.prev = ref.prev;
+		ent.prev.next = ent;
+		ref.prev = ent;
+
+		return this;
+	},
+
+	insertAfter : function(obj, ref) {
+
+		ref = ref == undefined ? this.last() : ref;
+		var ent = Utils.SentinelList.Entry.create(obj);
+
+		ent.next = ref.next;
+		ent.next.prev = ent;
+		ref.next = ent;
+		ent.prev = ref;
+
+		return this;
+	},
+
+	first : function() {
+		return this.nil.next;
+	},
+
+	last : function() {
+		return this.nil.prev;
+	},
+
+	remove : function(ref) {
+		if (ref !== this.nil) {
+			ref.next.prev = ref.prev;
+			ref.prev.next = ref.next;
+			ref.clear();
+		}
+		return this;
+	},
+
+	find : function(obj) {
+
+		var node = this.first();
+		while (node !== this.nil) {
+			if (node.obj === obj) {
+				return node;
+			}
+			node = node.next;
+		}
+
+		return null;
+	},
+
+}));
+
 Namespace('Utils.List', Class.extend({
 
 	construct : function(obj) {
