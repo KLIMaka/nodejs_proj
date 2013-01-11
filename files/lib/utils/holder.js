@@ -67,4 +67,13 @@ Namespace('Utils.Holder', Class.extend({
 		}
 	},
 
+	toString : function() {
+		var list = this.list;
+		var strs = [];
+		for (var i in list) {
+			strs.push(list[i].toString());
+		}
+		return '['+ strs.join(', ') +']';
+	},
+
 }));

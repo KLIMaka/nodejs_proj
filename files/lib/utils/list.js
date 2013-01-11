@@ -142,7 +142,7 @@ Namespace('Utils.List', Class.extend({
 	insertBefore : function(list) {
 		var prev = this.prev;
 		this.linkPrev(list.last());
-		prev.linkNext(list);
+		if (prev != null) prev.linkNext(list);
 	},
 
 	insert : function(obj) {

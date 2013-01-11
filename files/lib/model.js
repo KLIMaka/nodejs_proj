@@ -81,10 +81,9 @@ Namespace('Model.Sector', Class.extend({
 		this.order = order;
 
 		var node = this.segments;
-		var last = null;
 		while (node != null) {
 			var seg = node.obj;
-			if (order) seg.front  = this;
+			if (order) seg.front = this;
 			else seg.back = this;
 			if (node.next != null)
 				order = (node.next.obj.start === seg.end) || (node.next.obj.start === seg.start);
@@ -109,16 +108,16 @@ Namespace('Model.Sector', Class.extend({
 		var seg = this.containVertex(vtx);
 		if (seg == null) return null;
 
-		var next = seg.next == null ? this.segments.obj : seg.next.obj;
-		seg = seg.obj;
-		if (seg === this.segments.obj) {
-			if (!(next.start === vtx || next.end === vtx)) {
-				var last = next.last().obj;
-				return [(last.start === vtx ? last.end : last.start), vtx, (seg.start == vtx ? seg.end : seg.start)];
+		var next_obj = seg.next.obj;
+		var seg_obj = seg.obj;
+		if (seg === this.segments) {
+			if (!(next_obj.start === vtx || next_obj.end === vtx)) {
+				var last = seg.last().obj;
+				return [(last.start === vtx ? last.end : last.start), vtx, (seg_obj.start === vtx ? seg_obj.end : seg_obj.start)];
 			}
 		}
 
-		return [(seg.start == vtx ? seg.end : seg.start), vtx, (next.start == vtx ? next.end : next.start)];
+		return [(seg_obj.start === vtx ? seg_obj.end : seg_obj.start), vtx, (next_obj.start === vtx ? next_obj.end : next_obj.start)];
 	},
 
 	split : function(vtx1, vtx2, sec) {
@@ -145,11 +144,16 @@ Namespace('Model.Sector', Class.extend({
 		end.removeThis();
 		new_sector.push(sec);
 		end.insertBefore(Utils.List.create(sec));
+		if (end === this.segments) this.segments = end.prev;
 
 		if (start_vtx === vtx1) sec.front = this;
 		else                    sec.back  = this;
 
 		return Model.Sector.create(new_sector, order);
+	},
+
+	toString : function() {
+		return this.segments.toString();
 	},
 
 }));
@@ -259,7 +263,7 @@ Namespace('Model.Level', Class.extend({
 		var seg = this.segments.get(idx);
 		seg.remove();
 		this.segments.remove(idx);
-		this.controller('removeSegment', seg);
+		this.controller.run('removeSegment', seg);
 	},
 
 	addVertex : function(x, y) {
@@ -288,7 +292,7 @@ Namespace('Model.Level', Class.extend({
 			this.removeSegmentByIdx(seg_idx);
 
 			this.addSegment(a);
-			this.sddSegment(b);
+			this.addSegment(b);
 		}
 
 		return vertex;
@@ -334,8 +338,10 @@ Namespace('Model.Level', Class.extend({
 		if (consec == null) return false;
 
 		var new_sector = consec.split(seg.start, seg.end, seg);
-		this.sectors.add(new_sector);
 		this.addSegment(seg);
+		this.sectors.add(new_sector);
+		this.controller.run('addSector', new_sector);
+		this.controller.run('changeSector', consec);
 
 		return new_sector;
 	},
