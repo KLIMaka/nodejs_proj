@@ -1,7 +1,8 @@
 
 Namespace.include('lib.utils.holder');
 
-Namespace('Events.Handler', Class.extend({
+Events.Handler = function(){};
+Namespace('Events.Handler', Class.extend(Events.Handler, {
 
 	construct : function() {
 		this.events = [];

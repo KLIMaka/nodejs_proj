@@ -30,7 +30,9 @@ Namespace('BSP', {
 	},
 });
 
-Namespace('BSP.Node', Class.extend({
+Namespace('BSP.Node');
+BSP.Node = function(){};
+BSP.Node = Class.extend(BSP.Node, {
 
 	construct :  function(segments) {
 

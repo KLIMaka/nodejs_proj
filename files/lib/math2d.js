@@ -20,7 +20,8 @@ Namespace('Math2D', {
 
 });
 
-Namespace('Math2D.Vector', Class.extend({
+Math2D.Vector = function(){};
+Namespace('Math2D.Vector', Class.extend(Math2D.Vector, {
 
 	construct : function(x, y) {
 		if (arguments.length == 2) {
@@ -121,7 +122,8 @@ Namespace('Math2D.Vector', Class.extend({
 	},
 }));
 
-Namespace('Math2D.Vertex', Math2D.Vector.extend({
+Math2D.Vertex = function(){};
+Namespace('Math2D.Vertex', Math2D.Vector.extend(Match2D.Vertex, {
 
 	angle : function(a, b) {
 
@@ -133,7 +135,8 @@ Namespace('Math2D.Vertex', Math2D.Vector.extend({
 
 }));
 
-Namespace('Math2D.Line', Class.extend({
+Math2D.Line = function(){};
+Namespace('Math2D.Line', Class.extend(Match2D.Line, {
 
 	construct : function(normal, w) {
 		this.normal = normal.clone();
@@ -188,7 +191,8 @@ Namespace('Math2D.Line', Class.extend({
 
 }));
 
-Namespace('Math2D.Segment', Class.extend({
+Math2D.Segment = function(){};
+Namespace('Math2D.Segment', Class.extend(Math2D.Segment, {
 
 	construct : function(start, end) {
 

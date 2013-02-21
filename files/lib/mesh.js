@@ -13,7 +13,8 @@ Namespace('GL1.Buffers', {
 
 });
 
-Namespace('GL1.Buffers.Preallocated', Class.extend({
+GL1.Buffers.Preallocated = function(){};
+Namespace('GL1.Buffers.Preallocated', Class.extend(GL1.Buffers.Preallocated, {
 
 	DEFAULT_TARGET     : 'ARRAY_BUFFER',
 	DEFAULT_TYPE       : Float32Array,
@@ -68,7 +69,8 @@ Namespace('GL1.Buffers.Preallocated', Class.extend({
 	},
 }));
 
-Namespace("GL1.Mesh.QuadMesh", Class.extend({
+GL1.Mesh.QuadMesh = function(){};
+Namespace("GL1.Mesh.QuadMesh", Class.extend(GL1.Mesh.QuadMesh, {
 
 	construct : function(length, attrs) {
 

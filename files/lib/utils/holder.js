@@ -1,5 +1,6 @@
 
-Namespace('Utils.Holder.Ref', Class.extend({
+Utils.Holder.Ref = function(){};
+Namespace('Utils.Holder.Ref', Class.extend(Utils.Holder.Ref, {
 
 	construct : function(holder, id) {
 		this.holder = holder;
@@ -20,7 +21,8 @@ Namespace('Utils.Holder.Ref', Class.extend({
 
 }));
 
-Namespace('Utils.Holder', Class.extend({
+Utils.Holder = function(){};
+Namespace('Utils.Holder', Class.extend(Utils.Holder, {
 
 	construct : function() {
 		this.list = {};

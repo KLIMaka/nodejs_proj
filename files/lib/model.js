@@ -2,10 +2,11 @@
 Namespace.include('lib.math2d');
 Namespace.include('lib.utils.list');
 
-Namespace('Model.Vertex', Math2D.Vertex.extend({
+Model.Vertex = function(){};
+Namespace('Model.Vertex', Math2D.Vertex.extend(Model.Vertex, {
 
 	construct : function(x, y) {
-		Math2D.Vertex.construct.call(this, x, y);
+		this.superConstruct(x, y);
 		this.adjSegments = Utils.List.create();
 	},
 
@@ -44,10 +45,11 @@ Namespace('Model.Vertex', Math2D.Vertex.extend({
 
 }));
 
-Namespace('Model.Segment', Math2D.Segment.extend({
+Model.Segment = function(){};
+Namespace('Model.Segment', Math2D.Segment.extend(Model.Segment, {
 
 	construct : function(start, end, front, back) {
-		Math2D.Segment.construct.call(this, start, end);
+		this.superConstruct(start, end);
 		this.front = front;
 		this.back = back;
 
@@ -74,7 +76,8 @@ Namespace('Model.Segment', Math2D.Segment.extend({
 
 }));
 
-Namespace('Model.Sector', Class.extend({
+Model.Sector = function(){};
+Namespace('Model.Sector', Class.extend(Model.Sector, {
 
 	construct : function(segments, order) {
 		this.segments = Utils.List.fromArray(segments);
@@ -158,7 +161,8 @@ Namespace('Model.Sector', Class.extend({
 
 }));
 
-Namespace('Model.Level', Class.extend({
+Model.Level = function(){};
+Namespace('Model.Level', Class.extend(Model.Level, {
 
 	construct : function(controller) {
 

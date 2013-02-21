@@ -1,5 +1,6 @@
 
-Namespace('Utils.SentinelList.Entry', Class.extend({
+Utils.SentinelList.Entry = function(){};
+Namespace('Utils.SentinelList.Entry', Class.extend(Utils.SentinelList.Entry, {
 
 	construct : function(obj) {
 		this.obj = obj == undefined ? null : obj;
@@ -15,7 +16,8 @@ Namespace('Utils.SentinelList.Entry', Class.extend({
 
 }));
 
-Namespace('Utils.SentinelList', Class.extend({
+Utils.SentinelList = function(){};
+Namespace('Utils.SentinelList', Class.extend(Utils.SentinelList, {
 
 	construct : function(obj) {
 		this.nil = Utils.SentinelList.Entry.create();
@@ -81,7 +83,8 @@ Namespace('Utils.SentinelList', Class.extend({
 
 }));
 
-Namespace('Utils.List', Class.extend({
+Utils.List = function(){};
+Namespace('Utils.List', Class.extend(Utils.List, {
 
 	construct : function(obj) {
 		this.obj = obj == undefined ? null : obj;
